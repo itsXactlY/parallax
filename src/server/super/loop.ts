@@ -4,9 +4,9 @@ import { ownedAsset, toAsset } from "@/server/assets";
 import { userById, type User } from "@/server/auth";
 import { all, get, newId, parseJson, run } from "@/server/db";
 import { ApiError, badRequest } from "@/server/errors";
-import { hermesEngine, limits, resolveLlmModel, type Mode } from "./config";
+import { closeIdleLanes, runEngineTurn } from "./ariadne";
+import { engineSettings, limits, resolveLlmModel, type Mode } from "./config";
 import { suspendIdle } from "./computer";
-import { runHermesTurn } from "./hermes";
 import { listMemories, ownedProject, usableSkills } from "./library";
 import { llm, type LlmBlock, type LlmMessage } from "./llm";
 import { dueSchedules, markRan } from "./schedules";
@@ -20,8 +20,8 @@ import { clip, summarizeInput } from "./util";
  * the member stops it. Approval cards pause a turn until the member answers.
  *
  * Who does the thinking is a setting. The built-in engine calls the model from here
- * (`builtInTurn`). The Hermes engine hands the turn to a Hermes agent (`hermes.ts`), which
- * calls back for our tools. Queueing, stopping, time limits and approvals are the same.
+ * (`builtInTurn`). The Ariadne engine hands the turn to an Ariadne agent (`ariadne.ts`),
+ * which calls back for our tools. Queueing, stopping, time limits and approvals are the same.
  */
 
 interface Running {
@@ -99,6 +99,7 @@ async function sweep() {
   sweeping = true;
   try {
     await suspendIdle();
+    closeIdleLanes(engineSettings());
     runDueSchedules(Date.now());
   } catch (err) {
     console.error("[super] sweep failed:", err instanceof Error ? err.message : err);
@@ -269,10 +270,10 @@ async function runTurn(turn: TurnRow, abort: AbortController) {
   let status: TurnRow["status"] = "done";
   let error: string | null = null;
   try {
-    const engine = hermesEngine();
+    const engine = engineSettings();
     if (engine) {
       let steps = 0;
-      await runHermesTurn({
+      await runEngineTurn({
         engine,
         ctx,
         system: systemPrompt(user, chat0, turn.mode),

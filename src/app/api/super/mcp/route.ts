@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { handleEngineMcp } from "@/server/super/engine-mcp";
 
 /**
- * Where an outside engine (a Hermes agent) reaches Parallax's tools. Not for members and
+ * Where an outside engine (an Ariadne agent) reaches Parallax's tools. Not for members and
  * not for the public API: it takes the engine's own token, never a session or an API key.
  */
 

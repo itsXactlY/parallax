@@ -6,8 +6,8 @@ import { LEGACY_VERSIONS, MODERN_VERSIONS } from "../developer/mcp";
 import { ApiError } from "../errors";
 import { clientKey, rateLimit } from "../http";
 import { sameOrigin } from "../origin";
-import { hermesEngine } from "./config";
-import { callEngineTool } from "./hermes";
+import { callEngineTool } from "./ariadne";
+import { engineSettings } from "./config";
 import { engineTools, type ToolOutput } from "./tools";
 import { isRecord } from "./util";
 
@@ -111,7 +111,7 @@ function streamAnswer(work: Promise<Json>): Response {
 }
 
 export async function handleEngineMcp(req: NextRequest, authorization: string | null): Promise<Response> {
-  const engine = hermesEngine();
+  const engine = engineSettings();
   // On the built-in engine this address does not exist.
   if (!engine) return apiError(404, "not_found", "Not found.");
   if (!sameOrigin(req)) return json(rpcError(null, -32000, "Cross-site request refused."), 403);

@@ -2,7 +2,8 @@ import "server-only";
 
 import { all, run } from "@/server/db";
 import { badRequest } from "@/server/errors";
-import { publish } from "./hub";
+import { forgetLane } from "./ariadne";
+  import { publish } from "./hub";
 import { ownedProject, usableSkills } from "./library";
 import { stopChat } from "./loop";
 import { createChat, ownedChat, publishChat, toChat, type Chat, type ChatRow } from "./transcript";
@@ -71,6 +72,7 @@ export function patchChat(userId: string, id: string, patch: { title?: string; p
 export function deleteChat(userId: string, id: string) {
   ownedChat(userId, id);
   stopChat(userId, id);
+  forgetLane(id); // an agent lane started for this chat goes with it
   run("DELETE FROM super_approvals WHERE chat_id = ?", id);
   run("DELETE FROM super_turns WHERE chat_id = ?", id);
   run("DELETE FROM super_chats WHERE id = ?", id); // rows and model history go with it

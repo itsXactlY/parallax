@@ -1,6 +1,6 @@
 # Parallax
 
-**An open-source AI image, video and audio studio, with an agent chat you can run on your own Hermes agent.**
+**An open-source AI image, video and audio studio, with an agent chat you can run on your own Ariadne agent.**
 
 One web app: studios for pictures, video, voices and music, tools built on top of them, a
 community feed, a library, credits, an API for developers, and Supercomputer, an agent that
@@ -44,7 +44,7 @@ music models, each with its own controls and an exact price shown before you pre
 `TREG_DAILY_BUDGET_USD` stops paid requests once that much was spent in 24 hours. Keep it low
 while you try things out.
 
-## Supercomputer, on a Hermes agent, on Orgo
+## Supercomputer, on an Ariadne agent, on Orgo
 
 Supercomputer is the agent chat at `/supercomputer`. It can run on three things:
 
@@ -52,24 +52,24 @@ Supercomputer is the agent chat at `/supercomputer`. It can run on three things:
 |---|---|---|
 | Stand-in (default) | A scripted assistant, so the screens work with no keys | Nothing |
 | Built-in | Parallax runs the agent loop itself | `SUPER_MODE=live` and a model key |
-| **Hermes** | Your own [Hermes](https://github.com/NousResearch/hermes-agent) agent runs the conversation | A Hermes agent, for example on an [Orgo](https://www.orgo.ai) computer |
+| **Ariadne** | Your own Ariadne agent (`ariadne --serve`) runs the conversation | An Ariadne agent, for example on an [Orgo](https://www.orgo.ai) computer |
 
-With the Hermes engine, the agent does the thinking and Parallax gives it the studio's tools
+With the Ariadne engine, the agent does the thinking and Parallax gives it the studio's tools
 over MCP. When the agent wants a picture, the member gets an approval card with the price and
 pays with their own credits. The generation key never leaves Parallax.
 
-![A chat running on a Hermes engine](docs/screenshots/supercomputer-hermes.png)
+![A chat running on the Ariadne engine](docs/screenshots/supercomputer-ariadne.png)
 
 *The chat above ran in the test setup: a stand-in agent and a sample picture.*
 
-**Set it up: [`docs/hermes-on-orgo.md`](docs/hermes-on-orgo.md).** It is a step-by-step guide:
+**Set it up: [`docs/ariadne-on-orgo.md`](docs/ariadne-on-orgo.md).** It is a step-by-step guide:
 turn on the agent's API server, make two secrets, join the machines, add one entry to the
 agent's config, start Parallax. It also lists what to build next.
 
 Two things to know before you start:
 
 - The engine is tested end to end against a stand-in agent. It has not been run against a
-  live Hermes agent yet. If you try it, please open an issue with what you found.
+  live Ariadne agent yet. If you try it, please open an issue with what you found.
 - The agent's own tools (shell, files, memory) are **not** behind Parallax's approval cards.
   Do not point a public Parallax at a personal agent. The guide explains the safe setup.
 
@@ -99,7 +99,7 @@ Two things to know before you start:
   says so. Close it with `PARALLAX_DEMO_BILLING=off`.
 - **Supercomputer's live mode.** `SUPER_MODE=live` can start cloud computers and connect
   outside apps, and both can cost money. It has had far less testing than the studios.
-- **The Hermes engine against a real agent.** See above.
+- **The Ariadne engine against a real agent.** See above.
 - **Canvas** boards live in the browser only. **Horizon** is a preview page.
 - **The offer on the home page** (the `LAUNCH-WEEK` code and the discount badge) is sample
   marketing. Change it (search the code for `LAUNCH`) before you run this for anyone.
@@ -122,8 +122,9 @@ Everything is optional. Put them in `.env.local`.
 | `COOKIE_SECURE` | `1` when serving over https |
 | `SUPER_MODE` | `live` lets Supercomputer use the three keys below |
 | `ANTHROPIC_API_KEY`, `ORGO_API_KEY`, `COMPOSIO_API_KEY` | The agent's model, its cloud computer, and its app connections |
-| `SUPER_ENGINE` | `hermes` runs the Supercomputer chat on a Hermes agent instead of the built-in loop |
-| `HERMES_URL`, `HERMES_API_KEY_FILE`, `SUPER_ENGINE_TOKEN_FILE`, `SUPER_ENGINE_NAME` | Where the agent is, its key, the token it uses to call Parallax's tools, and the name members see |
+| `SUPER_ENGINE` | `ariadne` runs the Supercomputer chat on an Ariadne agent instead of the built-in loop |
+| `ARIADNE_URL`, `ARIADNE_API_KEY_FILE`, `SUPER_ENGINE_TOKEN_FILE`, `SUPER_ENGINE_NAME` | Where the agent's serve is, its key, the token it uses to call Parallax's tools, and the name members see |
+| `ARIADNE_PER_CHAT`, `ARIADNE_HOME`, `ARIADNE_BIN` | `1` starts one `ariadne --serve` per chat instead of dialing one shared endpoint, because one serve holds one conversation. Each lane then gets `lanes/<chat-id>/` under `ARIADNE_HOME` — its own config, tape and log — built from that home's `config.yaml`; `ARIADNE_BIN` is the binary it runs from |
 
 ## Run it for real
 
@@ -164,7 +165,7 @@ at phone size. To run a few: `python3 tests/run.py tests/core_e2e.py tests/ui/ho
 | `migrations/` | The database tables, applied in order on first start |
 | `seed/demo/` | The demo content |
 | `docs/api/` | The API reference, one page per feature |
-| `docs/hermes-on-orgo.md` | Running Supercomputer on a Hermes agent |
+| `docs/ariadne-on-orgo.md` | Running Supercomputer on an Ariadne agent |
 | `docs/ui/README.md`, `CONTRIBUTING.md` | How to build a screen, and how to build a feature |
 | `deploy/` | Scripts to run the built app in the background, and to join it to an agent |
 

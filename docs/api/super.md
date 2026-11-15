@@ -14,7 +14,7 @@ Everything lives under `/api/super`. You build the screens from this page alone.
 4. [Routes](#routes)
 5. [Errors](#errors)
 6. [Tables](#tables)
-7. [Engines](#engines): the built-in loop, or a Hermes agent
+7. [Engines](#engines): the built-in loop, or an Ariadne agent
 8. [Configuration](#configuration)
 9. [Open improvements](#open-improvements)
 
@@ -158,7 +158,7 @@ is clipped to short strings. Tool names:
 | `remember`, `recall` | The member's memory |
 | `ask_user` | Posts a question card |
 | `schedule_chat` | Proposes a scheduled chat (posts an approval card) |
-| `engine.<name>` | A tool of the outside engine's own, for example `engine.terminal`. Only on the [Hermes engine](#engines). `input` is always `{}` and `summary` is a readable name such as "Terminal". Show `summary`, not `tool` |
+| `engine.<name>` | A tool of the outside engine's own, for example `engine.run_terminal`. Only on the [Ariadne engine](#engines). `input` is always `{}` and `summary` is a readable name such as "Terminal". Show `summary`, not `tool` |
 
 ### `card`, approval for a generation
 
@@ -260,8 +260,8 @@ The composer's options.
 ```
 `tier` (`standard|low|medium|high`) is a cost hint for the model picker. `services` shows
 `mock` while a service is not live. You may want to show a "demo" badge in that case.
-`engine` says what runs the chat: `builtin`, or `hermes` with the agent's display name. On
-the Hermes engine `models` has one entry, `auto`, named after the agent, and `services.llm`
+`engine` says what runs the chat: `builtin`, or `ariadne` with the agent's display name. On
+the Ariadne engine `models` has one entry, `auto`, named after the agent, and `services.llm`
 is `live`.
 
 #### `GET /api/super/showcase`: **public**
@@ -506,23 +506,39 @@ rows, cards, credits and approvals.
 **Built-in** (the default). Parallax runs the loop itself: it calls the assistant model,
 runs the tools it asks for, and repeats up to `SUPER_MAX_STEPS` times.
 
-**Hermes** (`SUPER_ENGINE=hermes`). A Hermes agent runs the loop. Parallax sends each message to the agent's API server and shows its answer
+**Ariadne** (`SUPER_ENGINE=ariadne`). An Ariadne agent runs the loop. Parallax sends each message to the agent's serve and shows its answer
 as it streams. The agent reaches Parallax's tools over MCP, so media generation, the
 member's library, memory, questions and schedules still run inside Parallax, as that
 member, with their credits and their approval cards.
 
 ```
-member ──▶ Parallax ──POST {HERMES_URL}/v1/responses (stream)──▶ Hermes agent
+member ──▶ Parallax ──POST {ARIADNE_URL}/v1/chat/completions (stream)──▶ Ariadne agent
                 ▲                                                    │
                 └────────── POST /api/super/mcp (tools) ◀────────────┘
 ```
 
 ### What Parallax sends
 
-One request per message: `input` is the member's message, `instructions` is the same
-system prompt the built-in engine uses plus a few notes for the agent, and `conversation`
-is `parallax-<chatId>`, so the agent keeps the thread on its side. The agent's own persona
-and settings stay as they are; the instructions are added on top for that one answer.
+One request per message: `POST {ARIADNE_URL}/v1/chat/completions` with `stream: true`,
+`model` `ariadne`, and a single `user` message whose text is the system prompt the built-in
+engine uses, plus notes for the agent, plus the member's message marked as theirs. Ariadne's
+serve answers from the last user message only, so anything the agent must see travels in that
+text. Tool calls and results arrive inside `choices[0].delta` as `ariadne_tool_call` and
+`ariadne_tool_result`. A serve answers one turn at a time and answers a second call with 409,
+which Parallax waits on rather than giving up.
+
+Two ways to hold the thread:
+
+- **One shared endpoint** (`ARIADNE_PER_CHAT=0`, the default). Every chat talks to the same
+  agent, and Parallax puts that chat's own history in a `<chat-history>` block above the
+  member's message.
+-  127.0.0.1:<port>` for each chat and closes it when the chat is deleted, after
+  `ARIADNE_LANE_IDLE_MIN` of quiet, or when `ARIADNE_MAX_LANES` is reached, oldest first. Each
+  lane gets a folder of its own under `ARIADNE_HOME` — `lanes/<chat-id>/config.yaml`, written
+  from the engine home's `config.yaml` with Parallax's `mcp_servers` entry merged in — and
+  Ariadne makes the folder a config lives in its home, so the lane's tape, logs and agent
+  memory land there and in no other chat's. `skills/` and `rules/` are symlinked from the
+  engine home, not copied. The agent holds the thread itself, so no history block is sent.
 
 ### `POST /api/super/mcp`: the engine's tool server
 
@@ -543,44 +559,58 @@ MCP over Streamable HTTP, for the engine only. It answers **404** on the built-i
   `text/event-stream`, the answer is a stream with a comment line every 15 seconds, then one
   `message` event with the JSON-RPC result.
 
-The agent sees the tools as `mcp__<HERMES_MCP_NAME>__<tool>`, for example
-`mcp__parallax__generate_media`.
+Ariadne registers a server's tools under the names that server lists, so the member's tools reach
+it as `generate_media`, `recall`, `ask_user` and so on -- `parallax` is the toolset they are
+grouped under, not a prefix on the name. Ariadne keeps MCP tools out of the prompt until `find()`
+or `tool_search()` loads them, which is why the config entry lists them under the top-level
+`tool_search.always_load`: without that list the agent can only reach Parallax by searching for
+it.
 
 ### Setting it up
 
-1. On the agent's machine, turn on Hermes' API server and note its key (`API_SERVER_KEY`).
+1. On the agent's machine, start its serve and note its key: `DD_SERVE_KEY=<long random
+   value> ariadne --serve 127.0.0.1:8642 --home ~/ariadne`. `/health` answers 200, and
+   `/v1/chat/completions` answers 401 without the bearer key.
 2. Make a long random engine token for Parallax (`openssl rand -hex 32`).
-3. Add Parallax to the agent's `config.yaml`:
+3. Add Parallax to the agent's `config.yaml` with `deploy/add-parallax-to-ariadne.py`, which
+   also lists the Supercomputer tools under `tools.tool_search.always_load`:
    ```yaml
    mcp_servers:
      parallax:
-       url: https://<your-parallax>/api/super/mcp
+       enabled: true
+       transport: http
+       url: http://127.0.0.1:13100/api/super/mcp
        headers:
          Authorization: "Bearer <the engine token>"
-       timeout: 2100          # longer than SUPER_APPROVAL_MS
-       connect_timeout: 30
+       timeout: 2100          # seconds; Ariadne's default of 60 cuts a render off mid-flight
+       max_bytes: 4000000     # a generation result can carry more than the 1 MiB default
+       instructions: verbatim   # Parallax's own protocol text (the media order, the turn key) reaches the model as written; the default folds a server's instructions into Ariadne's retrieval contract and would drop them
    ```
-4. Start Parallax with `SUPER_ENGINE=hermes`, `HERMES_URL`, `HERMES_API_KEY_FILE` and
+   Ariadne reads `config.yaml` once at boot, so restart the agent after the edit.
+4. Start Parallax with `SUPER_ENGINE=ariadne`, `ARIADNE_URL`, `ARIADNE_API_KEY_FILE` and
    `SUPER_ENGINE_TOKEN_FILE`.
 
 Both sides must reach each other: Parallax calls the agent, and the agent calls Parallax
 back. When they are on private machines, one SSH tunnel with a local and a remote forward
 does both: `deploy/tunnel.sh`. The full walk-through is
-[`docs/hermes-on-orgo.md`](../hermes-on-orgo.md).
+[`docs/ariadne-on-orgo.md`](../ariadne-on-orgo.md).
 
 If a setting is missing, the server logs one line that names it and uses the built-in
 engine.
 
 ### Read this before you point it at a personal agent
 
-- **The agent's own tools are not behind Parallax's approval cards.** A Hermes agent often
-  has a shell, file access, a browser and its own connected accounts. A chat can ask it to
-  use them. They show in the chat as a step with a name only, and nothing asks the member
-  first. Use an agent whose tools you would hand to everyone who can open the chat: a
-  separate Hermes home with a narrow toolset is the safe choice for anything public.
-- **The agent keeps the conversation.** Deleting a chat in Parallax does not delete it on
-  the agent's side. An incognito chat tells the agent to save nothing, but the agent is not
-  forced to obey.
+- **The agent's own tools are not behind Parallax's approval cards.** An Ariadne agent has
+  a shell, file access and its own memory graph by default, and MCP tools plus any harness it
+  mounts. A chat can ask it to use them. They show in the chat as a step with a name only,
+  and nothing asks the member first. Use an agent whose tools you would hand to everyone who
+  can open the chat: a separate `--home` with `DD_DISABLE_TOOLS` naming the file and terminal
+  tools is the safe choice for anything public. `ARIADNE_DISABLE_TOOLS` is passed to every
+  lane Parallax starts.
+- **The agent keeps the conversation.** On a shared endpoint, deleting a chat in Parallax
+  does not delete it on the agent's side; on a per-chat lane it does, because the lane and its
+  home are Parallax's to close. An incognito chat tells the agent to save nothing, but the
+  agent is not forced to obey.
 - **Limits.** `SUPER_TURN_MS` still ends a reply that runs too long. `SUPER_MAX_STEPS` does
   not apply; the agent has its own limits. The step count on a turn is the number of tools
   that ran.
@@ -592,13 +622,19 @@ engine.
 | Variable | Default | Meaning |
 |---|---|---|
 | `SUPER_MODE` | (mock) | `live` turns on each service whose key is set |
-| `SUPER_ENGINE` | (built-in) | `hermes` runs the chat on a Hermes agent. Works with any `SUPER_MODE` |
-| `HERMES_URL` | | The agent's API server, for example `http://127.0.0.1:8642` |
-| `HERMES_API_KEY` or `HERMES_API_KEY_FILE` | | The agent's API key, or a file that holds it |
+| `SUPER_ENGINE` | (built-in) | `ariadne` runs the chat on an Ariadne agent. Works with any `SUPER_MODE` |
+| `ARIADNE_URL` | | The agent's serve, for example `http://127.0.0.1:8642` |
+| `ARIADNE_API_KEY` or `ARIADNE_API_KEY_FILE` | | The serve's `DD_SERVE_KEY`, or a file that holds it |
 | `SUPER_ENGINE_TOKEN` or `SUPER_ENGINE_TOKEN_FILE` | | The token the agent sends to `/api/super/mcp`. At least 24 characters |
-| `SUPER_ENGINE_NAME` | `Hermes` | The name members see in the model picker |
-| `HERMES_MODEL` | `hermes-agent` | The `model` field sent to the agent |
-| `HERMES_MCP_NAME` | `parallax` | The name of the Parallax entry in the agent's `mcp_servers` |
+| `SUPER_ENGINE_NAME` | `Ariadne` | The name members see in the model picker |
+| `ARIADNE_MODEL` | `ariadne` | The `model` field sent to the serve |
+| `ARIADNE_MCP_NAME` | `parallax` | The name of the Parallax entry in the agent's `mcp_servers` |
+| `ARIADNE_PER_CHAT` | (off) | `1` starts one `ariadne --serve` lane per chat instead of sharing one endpoint |
+| `ARIADNE_HOME` | | The agent home lanes are started from, required with `ARIADNE_PER_CHAT=1`; each lane gets `lanes/<chat-id>/` under it |
+| `ARIADNE_BIN` | `ariadne` | The binary lanes are started from |
+| `ARIADNE_PORT_BASE` | 8643 | First loopback port lanes are served on |
+| `ARIADNE_MAX_LANES`, `ARIADNE_LANE_IDLE_MIN` | 8, 20 | How many lanes may be alive, and how long a quiet one waits |
+| `ARIADNE_DISABLE_TOOLS` | | Tools to hand to every lane with `DD_DISABLE_TOOLS` |
 | `ANTHROPIC_API_KEY` | | Assistant model key (live only) |
 | `SUPER_LLM_MODEL` | `claude-opus-5-5` | The model used for `auto` |
 | `ORGO_API_KEY`, `ORGO_WORKSPACE_ID` | | Cloud computer key and workspace (live only) |

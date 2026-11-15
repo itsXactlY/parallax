@@ -11,7 +11,10 @@ steps to reproduce it.
 - Serve it over HTTPS and set `COOKIE_SECURE=1` and `PARALLAX_ORIGIN`.
 - Set `TREG_DAILY_BUDGET_USD`. It caps what the server can spend in a day.
 - Payments are not connected. Credits are granted by the app itself; do not sell them.
-- If Supercomputer runs on a Hermes agent, read the warning in
-  [`docs/hermes-on-orgo.md`](docs/hermes-on-orgo.md): the agent's own tools are not behind
+- If Supercomputer runs on an Ariadne agent, read the warning in
+  [`docs/ariadne-on-orgo.md`](docs/ariadne-on-orgo.md): the agent's own tools are not behind
   Parallax's approval cards. Use a narrow agent for anything public.
+  With `ARIADNE_PER_CHAT=1` each lane keeps its own conversation, logs and agent memory under
+  `ARIADNE_HOME/lanes/<chat-id>/`, and its config file holds the engine token. Keep that
+  directory private (mode `0700`/`0600`) and delete it when you delete the chat.
 - Keys live in `.env.local` or in files named by `*_FILE` settings. Never commit them.

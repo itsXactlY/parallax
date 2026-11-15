@@ -11,11 +11,13 @@
 #   server.log     the log
 #   env            optional extra settings, one NAME=value per line
 #   origin.txt     optional: the public https address, if the app sits behind a link or proxy
-#   engine/        optional: run Supercomputer on a Hermes agent (see docs/hermes-on-orgo.md)
-#     hermes-api.key   the agent's API key
+#   engine/        optional: run Supercomputer on an Ariadne agent (see docs/ariadne-on-orgo.md)
+#     ariadne.key      the bearer the Ariadne serve endpoint expects (empty when it runs on
+#                      loopback with no key; absent when the endpoint has no key)
 #     engine.token     the token the agent uses to call Parallax's tools
-#     name.txt         the name members see (default: Hermes)
-#     url.txt          where the agent's API is (default: this machine's end of tunnel.sh)
+#     name.txt         the name members see (default: Ariadne)
+#     url.txt          where the agent's API is (default: http://127.0.0.1:8642, the port
+#                      `ariadne --serve 127.0.0.1:8642` listens on; tunnel.sh's local end is 18642)
 #     off              an empty file with this name turns the engine off
 #
 # PORT (default 3000) and BIND (default 0.0.0.0) can be set when calling the script.
@@ -48,17 +50,19 @@ if [ "${1:-}" = "mock" ]; then vars+=("TREG_MODE=mock"); fi
 
 ENGINE_DIR="$RUN_DIR/engine"
 engine="built-in"
-if [ -s "$ENGINE_DIR/hermes-api.key" ] && [ -s "$ENGINE_DIR/engine.token" ] && [ ! -e "$ENGINE_DIR/off" ]; then
+if [ -s "$ENGINE_DIR/engine.token" ] && [ ! -e "$ENGINE_DIR/off" ]; then
   url="http://127.0.0.1:18642"
   if [ -s "$ENGINE_DIR/url.txt" ]; then url="$(tr -d ' \n\r' < "$ENGINE_DIR/url.txt")"; fi
-  name="Hermes"
+  name="Ariadne"
   if [ -s "$ENGINE_DIR/name.txt" ]; then name="$(head -n 1 "$ENGINE_DIR/name.txt")"; fi
   vars+=(
-    "SUPER_ENGINE=hermes" "HERMES_URL=$url" "SUPER_ENGINE_NAME=$name"
-    "HERMES_API_KEY_FILE=$ENGINE_DIR/hermes-api.key"
+    "SUPER_ENGINE=ariadne" "ARIADNE_URL=$url" "SUPER_ENGINE_NAME=$name"
+    "SUPER_ENGINE=ariadne" "ARIADNE_URL=$url" "SUPER_ENGINE_NAME=$name"
     "SUPER_ENGINE_TOKEN_FILE=$ENGINE_DIR/engine.token"
   )
-  engine="$name (Hermes)"
+  # A serve endpoint on loopback with no key needs no bearer; a path that is not there is not a key.
+  if [ -s "$ENGINE_DIR/ariadne.key" ]; then vars+=("ARIADNE_API_KEY_FILE=$ENGINE_DIR/ariadne.key"); fi
+  engine="$name (Ariadne)"
 fi
 
 # Extra settings last, so they can override the defaults above.

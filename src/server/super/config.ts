@@ -1,13 +1,13 @@
 import "server-only";
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 /**
  * Settings for the agent chat. Each outside service is live only when SUPER_MODE=live
  * and its own key is set; otherwise that one service runs as a mock.
  *
- * The assistant itself can also run on an outside engine: a Hermes agent (SUPER_ENGINE=hermes).
- * Then Hermes does the thinking and Parallax serves it our tools; see `hermes.ts`.
+ * The assistant itself can also run on an outside engine: an Ariadne agent (SUPER_ENGINE=ariadne).
+ * Then Ariadne does the thinking and Parallax serves it our tools; see `ariadne.ts`.
  */
 
 export type Service = "llm" | "computer" | "connectors";
@@ -19,7 +19,7 @@ const KEYS: Record<Service, string> = {
 };
 
 export function serviceMode(service: Service): "live" | "mock" {
-  if (service === "llm" && hermesEngine()) return "live";
+  if (service === "llm" && engineSettings()) return "live";
   return process.env.SUPER_MODE === "live" && !!process.env[KEYS[service]] ? "live" : "mock";
 }
 
@@ -36,39 +36,69 @@ export function secret(name: string): string | null {
   }
 }
 
-export interface HermesEngine {
-  /** Where the agent's API server answers, with no trailing slash. */
+/** What an outside engine needs to be reached, and how Parallax reaches it. */
+export interface EngineSettings {
+  /** Where the agent's API server answers, with no trailing slash. Empty in per-chat mode. */
   url: string;
-  /** The agent's own API key. */
+  /** The bearer the agent's endpoint expects (`serve.api_key` / `DD_SERVE_KEY`). */
   key: string;
   /** What the agent must show us when it calls our tools. */
   token: string;
   model: string;
   /** The name members see in the composer. */
   name: string;
-  /** The name our tool server has in the agent's settings; its tools are `mcp__<name>__<tool>`. */
+  /** The name of our entry in the agent's `mcp_servers`. */
   mcpName: string;
+  /**
+   * One agent process per chat. Ariadne's server owns one conversation, so a shared
+   * endpoint would mix every member's chats; per-chat mode starts one `ariadne --serve`
+   * on loopback for each chat and recycles it when it goes idle.
+   */
+  perChat: boolean;
+  /** The agent binary and the home it runs from, for per-chat mode. */
+  bin: string;
+  home: string;
+  /** First loopback port per-chat lanes bind to; each lane takes the next free one. */
+  portBase: number;
+  /** Minutes a lane may sit unused before it is closed. */
+  idleMinutes: number;
+  /** How many lanes one server may hold at once. */
+  maxLanes: number;
+  /** Tools left out of the agent's deck, comma-separated. Its own shell and files by default. */
+  disableTools: string;
 }
+
+/** Ariadne leaves its own tools off a Parallax lane unless the operator names a narrower set. */
+const DEFAULT_DISABLED_TOOLS = "run_terminal,write_file,edit_file,list_dir,read_file,delegate_task,job,view_image";
 
 let warned = false;
 
-/** The Hermes engine's settings, or null when the built-in engine is in charge. */
-export function hermesEngine(): HermesEngine | null {
-  if ((process.env.SUPER_ENGINE ?? "").trim().toLowerCase() !== "hermes") return null;
-  let url: string | null = null;
-  try {
-    const u = new URL(process.env.HERMES_URL ?? "");
-    if (u.protocol === "http:" || u.protocol === "https:") url = (u.origin + u.pathname).replace(/\/+$/, "");
-  } catch {
-    /* not an address */
+/** The Ariadne engine's settings, or null when the built-in engine is in charge. */
+export function engineSettings(): EngineSettings | null {
+  if ((process.env.SUPER_ENGINE ?? "").trim().toLowerCase() !== "ariadne") return null;
+  const perChat = (process.env.ARIADNE_PER_CHAT ?? "").trim().toLowerCase() === "1";
+  let url = "";
+  if (!perChat) {
+    try {
+      const u = new URL(process.env.ARIADNE_URL ?? "");
+      if (u.protocol === "http:" || u.protocol === "https:") url = (u.origin + u.pathname).replace(/\/+$/, "");
+    } catch {
+      /* not an address */
+    }
   }
-  const key = secret("HERMES_API_KEY");
+  const key = secret("ARIADNE_API_KEY");
   const token = secret("SUPER_ENGINE_TOKEN");
-  if (!url || !key || !token || token.length < 24) {
+  const home = process.env.ARIADNE_HOME?.trim() ?? "";
+  if (!url && !perChat || perChat && !home || !key || !token || token.length < 24) {
     if (!warned) {
       warned = true;
-      const missing = [!url && "HERMES_URL", !key && "HERMES_API_KEY", (!token || token.length < 24) && "SUPER_ENGINE_TOKEN (24+ characters)"].filter(Boolean);
-      console.error(`[super] SUPER_ENGINE=hermes is set but incomplete (${missing.join(", ")}). Using the built-in engine.`);
+      const missing = [
+        !url && !perChat && "ARIADNE_URL",
+        perChat && !home && "ARIADNE_HOME (the lane home a serve starts from)",
+        !key && "ARIADNE_API_KEY",
+        (!token || token.length < 24) && "SUPER_ENGINE_TOKEN (24+ characters)",
+      ].filter(Boolean);
+      console.error(`[super] SUPER_ENGINE=ariadne is set but incomplete (${missing.join(", ")}). Using the built-in engine.`);
     }
     return null;
   }
@@ -76,10 +106,29 @@ export function hermesEngine(): HermesEngine | null {
     url,
     key,
     token,
-    model: process.env.HERMES_MODEL?.trim() || "hermes-agent",
-    name: (process.env.SUPER_ENGINE_NAME?.trim() || "Hermes").slice(0, 40),
-    mcpName: (process.env.HERMES_MCP_NAME?.trim() || "parallax").replace(/[^A-Za-z0-9_]/g, "_"),
+    model: process.env.ARIADNE_MODEL?.trim() || "ariadne",
+    name: (process.env.SUPER_ENGINE_NAME?.trim() || "Ariadne").slice(0, 40),
+    mcpName: (process.env.ARIADNE_MCP_NAME?.trim() || "parallax").replace(/[^A-Za-z0-9_]/g, "_"),
+    perChat,
+    bin: process.env.ARIADNE_BIN?.trim() || "ariadne",
+    home,
+    portBase: num("ARIADNE_PORT_BASE", 8643, 1024, 65535),
+    idleMinutes: num("ARIADNE_LANE_IDLE_MIN", 20, 1, 24 * 60),
+    maxLanes: num("ARIADNE_MAX_LANES", 8, 1, 64),
+    disableTools: process.env.ARIADNE_DISABLE_TOOLS?.trim() ?? DEFAULT_DISABLED_TOOLS,
   };
+}
+
+/**
+ * Whether this engine's endpoint is per-chat, from settings or from the lane a chat already
+ * has. `loop.ts` asks it before reading any shared address, so a chat bound to a lane can never
+ * dial the shared endpoint or take another chat's lane.
+ */
+export function engineIsPerChat(): boolean {
+  const eng = engineSettings();
+  if (eng?.perChat) return true;
+  const base = (process.env.SUPER_ENGINE ?? "").trim().toLowerCase();
+  return base === "ariadne" && (process.env.ARIADNE_PER_CHAT ?? "").trim().toLowerCase() === "1";
 }
 
 function num(name: string, fallback: number, min: number, max: number): number {

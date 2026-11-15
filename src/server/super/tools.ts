@@ -467,7 +467,7 @@ export async function toolsFor(userId: string): Promise<ToolDef[]> {
 }
 
 /**
- * The tools an outside engine (a Hermes agent) may call. The list is the same for every
+ * The tools an outside engine (an Ariadne agent) may call. The list is the same for every
  * member, so the engine can read it before any turn exists. A member's own connected-app
  * tools are not in it, and the cloud computer only when it is a real one: the engine brings
  * its own browser and shell.
