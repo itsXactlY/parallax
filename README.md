@@ -41,7 +41,7 @@ through the whole product for free.
 You need Node.js 22.13 or newer (the app uses Node's built-in SQLite).
 
 ```bash
-git clone https://github.com/nickvasilescu/parallax.git
+git clone https://github.com/itsXactlY/parallax.git
 cd parallax
 npm ci
 PARALLAX_DEMO_SEED=1 npm run dev
