@@ -84,9 +84,19 @@ if [ -s "$ENGINE_DIR/engine.token" ] && [ ! -e "$ENGINE_DIR/off" ]; then
 fi
 
 # Extra settings last, so they can override the defaults above.
+# A key named twice is refused rather than silently resolved by position: a leftover
+# SD_CPP_BIN=/tmp/stub-sd/sd-cli further down this file once turned every real render into a
+# 1x1 stub that the app stored as the member's picture.
 if [ -s "$RUN_DIR/env" ]; then
+  seen=" "
   while IFS= read -r line; do
-    case "$line" in ''|'#'*) continue ;; *=*) vars+=("$line") ;; esac
+    case "$line" in ''|'#'*) continue ;; *=*) ;; *) continue ;; esac
+    key="${line%%=*}"
+    case "$seen" in
+      *" $key "*) echo "run/env names $key twice: keep one line"; exit 1 ;;
+    esac
+    seen="$seen$key "
+    vars+=("$line")
   done < "$RUN_DIR/env"
 fi
 

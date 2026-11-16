@@ -235,8 +235,12 @@ async function render(req: LocalRenderRequest, jobId: string): Promise<Buffer> {
     const log = await spawnRenderer(args, renderTimeoutMs());
     if (!fs.existsSync(out)) throw new LocalRendererError("render_failed", `The renderer finished with no file. ${log.tail}`);
     const bytes = fs.readFileSync(out);
-    if (bytes.length < 64 || bytes.subarray(0, 8).toString("hex") !== "89504e470d0a1a0a") {
-      throw new LocalRendererError("render_failed", `The renderer wrote something that is not a PNG. ${log.tail}`);
+    const box = pngBox(bytes);
+    if (!box) throw new LocalRendererError("render_failed", `The renderer wrote something that is not a PNG (${bytes.length} bytes). ${log.tail}`);
+    // A renderer that answers a different box than it was asked for is broken, not generous: a 1x1
+    // PNG would otherwise be stored as the member's picture and read as "nothing happened".
+    if (box.width !== req.width || box.height !== req.height) {
+      throw new LocalRendererError("render_failed", `The renderer answered ${box.width}x${box.height} for a ${req.width}x${req.height} request. ${log.tail}`);
     }
     console.log(`[local-media] ${jobId} ${path.basename(components.diffusion ?? components.model ?? "")} ${req.width}x${req.height} ${req.steps} steps in ${log.ms} ms, ${bytes.length} bytes`);
     return bytes;
@@ -244,6 +248,13 @@ async function render(req: LocalRenderRequest, jobId: string): Promise<Buffer> {
     fs.rmSync(dir, { recursive: true, force: true });
     await release();
   }
+}
+
+/** The box a PNG declares in its IHDR, or null when the bytes are not a PNG. */
+function pngBox(bytes: Buffer): { width: number; height: number } | null {
+  if (bytes.length < 24 || bytes.subarray(0, 8).toString("hex") !== "89504e470d0a1a0a") return null;
+  if (bytes.subarray(12, 16).toString("ascii") !== "IHDR") return null;
+  return { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
 }
 
 function spawnRenderer(args: string[], timeoutMs: number): Promise<{ tail: string; ms: number }> {

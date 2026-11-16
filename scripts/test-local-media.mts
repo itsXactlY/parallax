@@ -22,12 +22,40 @@ fs.writeFileSync(
   stubRenderer,
   `#!/usr/bin/env node
 import fs from "node:fs";
-const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==", "base64");
+import zlib from "node:zlib";
 const args = process.argv.slice(2);
 const out = args[args.indexOf("-o") + 1];
-if (process.env.STUB_FAIL === "1") { process.stderr.write("stub: cannot load weights\\n"); process.exit(3); }
+const num = (flag, fallback) => { const i = args.indexOf(flag); return i >= 0 ? Number(args[i + 1]) : fallback; };
+if (process.env.STUB_FAIL === "1") { process.stderr.write("stub: cannot load weights\\\\n"); process.exit(3); }
 await new Promise((d) => setTimeout(d, Number(process.env.STUB_SLEEP_MS ?? 0)));
-if (process.env.STUB_NO_FILE !== "1") fs.writeFileSync(out, PNG);
+if (process.env.STUB_NO_FILE !== "1") {
+  // A real renderer answers the box it was asked for: 8-bit grey, every pixel 0, a valid PNG.
+  let w = num("-W", 1), h = num("-H", 1);
+  if (process.env.STUB_WRONG_BOX === "1") { w = 64; h = 64; }
+  fs.writeFileSync(out, png(w, h));
+}
+function crc32(buf) {
+  let crc = 0xffffffff;
+  for (let n = 0; n < buf.length; n++) {
+    let c = (crc ^ buf[n]) & 0xff;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    crc = (crc >>> 8) ^ c;
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+}
+function chunk(type, data) {
+  const len = Buffer.alloc(4); len.writeUInt32BE(data.length);
+  const t = Buffer.from(type, "ascii");
+  const crc = Buffer.alloc(4); crc.writeUInt32BE(crc32(Buffer.concat([t, data])));
+  return Buffer.concat([len, t, data, crc]);
+}
+function png(w, h) {
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(w, 0); ihdr.writeUInt32BE(h, 4); ihdr[8] = 8; ihdr[9] = 0;
+  const raw = Buffer.alloc((w + 1) * h);   // filter byte 0 per row, then w zero bytes
+  return Buffer.concat([Buffer.from("89504e470d0a1a0a", "hex"), chunk("IHDR", ihdr),
+                        chunk("IDAT", zlib.deflateSync(raw)), chunk("IEND", Buffer.alloc(0))]);
+}
 `,
 );
 fs.chmodSync(stubRenderer, 0o755);
@@ -160,6 +188,10 @@ process.env.STUB_UNLOAD_BUSY = "0";
 process.env.STUB_FAIL = "1";
 await expectCode("renderer exit", "render_failed", req());
 process.env.STUB_FAIL = "0";
+
+process.env.STUB_WRONG_BOX = "1";
+await expectCode("renderer box", "render_failed", req());
+process.env.STUB_WRONG_BOX = "0";
 
 process.env.STUB_SLEEP_MS = "250";
 const before = leases.length; // the failure paths above already talked to the lease server

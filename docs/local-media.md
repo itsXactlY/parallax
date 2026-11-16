@@ -161,6 +161,13 @@ never show a price the machine will not charge.
 `npm run fire:local` fires a real render through the same code path and writes the PNG out — it
 takes the GPU lease, so run it when the lane is quiet.
 
+A render is refused unless the PNG the renderer wrote is the box that was asked for
+(`render_failed: the renderer answered 64x64 for a 1024x1024 request`). That check is what turns a
+wrong renderer — a stub left in `deploy/run/env` by a test, a build that silently ignores `-W/-H` —
+into a failed job instead of a tiny picture stored under the member's prompt. `deploy/start.sh`
+likewise refuses a `run/env` that names the same key twice, so a stub line cannot sit under a real
+`SD_CPP_BIN`.
+
 `tests/run.py` runs the API suite with `MEDIA_PROVIDER=treg`, so no walk-through can take the lease:
 a `local.` model submitted by a browser test would unload the model serving the operator and hold
 the card for minutes. The local path is covered by `npm run test:local-media` instead, which needs
