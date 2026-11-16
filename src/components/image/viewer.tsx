@@ -107,7 +107,7 @@ function Publish({ asset, onDone }: { asset: Asset; onDone: () => void }) {
       <p className="text-sm leading-5 font-medium text-text-primary">{p.heading}</p>
       <label className="flex flex-col gap-1 text-xs leading-4 text-text-secondary">
         {p.titleLabel}
-        <input
+        <input id="viewer-title" name="viewer-title"
           value={title}
           maxLength={120}
           onChange={(e) => setTitle(e.target.value)}

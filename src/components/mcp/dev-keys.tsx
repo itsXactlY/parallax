@@ -184,7 +184,7 @@ function KeyForm({ existing, onClose, onSaved }: { existing: ApiKey | null; onCl
       <DialogContent title={existing ? `${t.rename} key` : t.create} className="max-w-[480px]">
         <form onSubmit={submit} className="flex flex-col gap-4 p-6 pt-4">
           <Field label={t.name}>
-            <input value={name} maxLength={60} onChange={(e) => setName(e.target.value)} placeholder={t.namePlaceholder} className={fieldClass} autoFocus />
+            <input id="dev-keys-name" name="dev-keys-name" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} placeholder={t.namePlaceholder} className={fieldClass} autoFocus />
           </Field>
           <fieldset className="flex flex-col gap-2">
             <legend className="mb-[6px] text-xs leading-4 font-medium text-text-nav">{t.scopes}</legend>

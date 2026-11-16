@@ -36,7 +36,7 @@ export function Tools() {
           <label className="flex h-9 items-center gap-2 rounded-xl bg-border-default px-[10px] focus-within:outline-2 focus-within:outline-brand">
             <Search className="size-[18px] shrink-0 text-text-secondary" strokeWidth={1.5} aria-hidden />
             <span className="sr-only">{toolsSection.search}</span>
-            <input
+            <input id="tools-query" name="tools-query"
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}

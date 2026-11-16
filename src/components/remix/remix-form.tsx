@@ -103,7 +103,7 @@ function DropZone({
       onDragLeave={() => setOver(false)}
       onDrop={onDrop}
     >
-      <input
+      <input id="remix-form-file"
         ref={input}
         type="file"
         accept={slot.accept.map((k) => `${k}/*`).join(",")}

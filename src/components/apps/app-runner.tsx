@@ -12,7 +12,7 @@ import { api, ApiError, errorMessage, fetcher, type Asset, type Job } from "@/li
 import { useNow } from "@/lib/browser";
 import { refreshSession, setBalance, useSession } from "@/lib/session";
 import { isActive } from "@/lib/studio";
-import { Artwork, ButtonLink, Spinner, Tag, cn } from "@/ui";
+import { Artwork, ButtonLink, Spinner, Tag, cn, imgBox } from "@/ui";
 import { ControlInput, FieldInput, InputTile, Row, Thumb, panel } from "./form-parts";
 import type { AppDetail, AppRun, FieldValue, Price } from "./types";
 
@@ -63,7 +63,7 @@ function Done({ job, asset }: { job: Job; asset: Asset }) {
         </div>
       ) : (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={asset.posterUrl ?? asset.url} alt={`Made with ${job.modelName}`} loading="lazy" className="size-full object-cover" />
+        <img src={asset.posterUrl ?? asset.url} alt={`Made with ${job.modelName}`} loading="lazy" {...imgBox(asset)} className="size-full object-cover" />
       )}
       <div className="pointer-events-none absolute inset-x-0 top-0 flex justify-end p-2 opacity-0 transition-opacity duration-150 group-focus-within:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100">
         <a href={`${asset.url}?download=1`} download aria-label={appCopy.download} title={appCopy.download} className={cn(overlayButton, "pointer-events-auto")}>

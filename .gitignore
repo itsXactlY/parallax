@@ -53,3 +53,7 @@ __pycache__/
 
 # local deploy state
 /deploy/run/
+
+# an Ariadne engine home for lanes: its config.yaml holds the engine token, and every lane under
+# lanes/<chat-id>/ holds a real conversation, tape and log. None of it belongs in git.
+/run/

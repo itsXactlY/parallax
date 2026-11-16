@@ -15,20 +15,40 @@ import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { connect } from "node:net";
+import { kill } from "node:process";
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const CHROME = [process.env.CHROME_BIN, "/usr/local/bin/google-chrome", "/usr/bin/google-chrome", "/usr/bin/chromium", "/usr/bin/chromium-browser"].filter(Boolean);
+const CHROME = [process.env.CHROME_BIN, "/usr/local/bin/google-chrome", "/usr/bin/google-chrome", "/usr/bin/google-chrome-stable", "/usr/bin/chromium", "/usr/bin/chromium-browser"].filter(Boolean);
+
+/** A port nobody is listening on. Chrome's DevTools port must be ours: a leftover Chrome that
+ *  still holds one answers /json with ITS targets, which is not the browser we are driving. */
+const portFree = (port) =>
+  new Promise((resolve) => {
+    const s = connect({ host: "127.0.0.1", port });
+    s.setTimeout(250);
+    s.on("connect", () => { s.destroy(); resolve(false); });
+    s.on("timeout", () => { s.destroy(); resolve(true); });
+    s.on("error", () => { s.destroy(); resolve(true); });
+  });
 
 export async function launch({ width = 1440, height = 900, out = ".", mobile = width < 600 } = {}) {
   const bin = CHROME.find((p) => existsSync(p));
   if (!bin) throw new Error("no Chrome found. Set CHROME_BIN.");
   mkdirSync(out, { recursive: true });
   const profile = mkdtempSync(join(tmpdir(), "parallax-chrome-"));
-  const port = 9400 + Math.floor(Math.random() * 500);
+  const base = 9400 + Math.floor(Math.random() * 500);
+  let port = 0;
+  for (let p = base; p < base + 40; p++) {
+    if (await portFree(p)) { port = p; break; }
+  }
+  if (!port) throw new Error("no free DevTools port between 9400 and 9940 -- a Chrome is still holding them");
+  // A process group, so close() can reap the zygote, GPU and renderer children too: a killed
+  // parent leaves them alive, holding the debug port for the next launch.
   const chrome = spawn(
     bin,
     ["--headless=new", "--no-sandbox", "--disable-gpu", "--hide-scrollbars", "--no-first-run", `--user-data-dir=${profile}`, `--remote-debugging-port=${port}`, `--window-size=${width},${height}`, "about:blank"],
-    { stdio: "ignore" },
+    { stdio: "ignore", detached: true },
   );
 
   let wsUrl = null;
@@ -40,9 +60,12 @@ export async function launch({ width = 1440, height = 900, out = ".", mobile = w
     if (!wsUrl) await sleep(200);
   }
   if (!wsUrl) {
+    try {
+      kill(-chrome.pid, "SIGKILL");
+    } catch {}
     chrome.kill("SIGKILL");
     throw new Error("Chrome did not start");
-  }
+ }
 
   const ws = new WebSocket(wsUrl);
   await new Promise((resolve, reject) => {
@@ -162,11 +185,15 @@ export async function launch({ width = 1440, height = 900, out = ".", mobile = w
     try {
       ws.close();
     } catch {}
-    chrome.kill("SIGKILL");
+    try {
+      kill(-chrome.pid, "SIGKILL"); // the whole group: children hold the debug port
+    } catch {}
+    try {
+      chrome.kill("SIGKILL");
+    } catch {}
     await sleep(200);
     rmSync(profile, { recursive: true, force: true });
   }
-
   return { send, evaluate, until, centre, hover, click, key, type, goto, reload, shot, resize, close, sleep, logs: () => [...new Set(seen)] };
 }
 

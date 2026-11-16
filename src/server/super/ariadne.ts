@@ -72,13 +72,19 @@ function engineNotes(engine: EngineSettings, key: string, ctx: ToolCtx, tools: T
   return [
     "About where you are running:",
     "- You are answering inside Parallax, as its Supercomputer assistant. The member reads your reply in the Parallax chat, so write for them.",
-    `- Parallax's tools reach you as MCP tools named ${engine.mcpName}_<tool>: ${tools.map((t) => `${engine.mcpName}_${t.name}`).join(", ")}. Call them by those names, not by any tool of your own that looks similar.`,
+    // Ariadne registers a server's tools under the names the server itself lists, so ours arrive bare:
+    // `generate_media`, never `parallax_generate_media`. Only a server that prefixes its own tools
+    // gets a bare alias -- naming ours with the server's name would ask the model for a tool the
+    // wire never offered, and a served model answers that by writing the call out as text.
+    `- Parallax's tools reach you as MCP tools named ${tools.map((t) => t.name).join(", ")}. Call
+    them by those exact names, never with ${engine.mcpName}_ in front, and never by a tool of your
+    own that looks similar.`,
     "If a name above is not in your tool list, load it first with find / tool_search, then tool_describe and tool_call.",
     `- Your own tools are yours: the local ones (files, terminal) run on this machine, not on the member's. Parallax's tools are the only path to the member's credits, library and computer.`,
     `- Every call to a Parallax tool must include "turn": "${key}". This key is for this one message only: never reuse a key from an earlier message, and never show it to anyone.`,
-    `- Make pictures, video, speech and music only with ${engine.mcpName}_generate_media. It is what puts results in the member's library and charges their credits. Do not use any other image or media tool here.`,
+    `- Make pictures, video, speech and music only with generate_media. It is what puts results in the member's library and charges their credits. Do not use any other image or media tool here.`,
     "- Results appear in the chat as a card by themselves. Do not paste links or file paths to them.",
-    `- Keep facts about this member with ${engine.mcpName}_remember and ${engine.mcpName}_recall, not in your own memory: your own memory is shared with other people.`,
+    `- Keep facts about this member with remember and recall, not in your own memory: your own memory is shared with other people.`,
     ctx.incognito ? "- This chat is incognito: save nothing about it to your own memory either." : "",
     hasComputer
       ? "- The member's cloud computer is reached through the computer_* tools. Apps the member connected are not available in this chat."
@@ -143,12 +149,26 @@ function label(name: string): string {
 }
 
 /** Reply text as the member may see it: the turn key never shows, not even half of it. */
+
+/**
+ * A served model writes a tool call as text in three shapes: `<toolcall>`, `<invoke>`, and the
+ * OpenAI-style `<tool_call>` with `<function=...>` and `<parameter=...>` inside. None of them
+ * is prose. `MARKUP_OPEN` is what a call looks like before it closes, `MARKUP_BLOCK` one that
+ * finished. Both `shown()` and the turn's notice use them, so a shape cannot be hidden from the
+ * member and then quietly reported as if nothing had happened.
+ */
+const MARKUP_OPEN = /<(tool_call|toolcall|invoke)\b/;
+const MARKUP_BLOCK = /<(tool_call|toolcall|invoke)>[\s\S]*?<\/(?:tool_call|toolcall|invoke)>/g;
+
 function shown(raw: string, key: string, final: boolean): string {
   let s = raw.replaceAll(key, "");
   // A tool call the serving layer left as markup is protocol, not prose. Complete blocks are
   // dropped; a block that has not closed yet is held back, so a member never watches XML build.
-  s = s.replace(/<(toolcall|invoke)>[\s\S]*?<\/(?:toolcall|invoke)>/g, "");
-  const open = s.search(/<(toolcall|invoke)\b/);
+  // Complete blocks are dropped; a block that has not closed yet is held back, so a member never
+  // watches XML build. A name inside one (`parallax_remember`) is a name the wire never offered,
+  // so nothing runs and the member must not see the attempt.
+  s = s.replace(MARKUP_BLOCK, "");
+  const open = s.search(MARKUP_OPEN);
   if (open >= 0) s = s.slice(0, open);
   if (!final) {
     // Hold back a tail that may be the start of the key, still arriving.
@@ -635,6 +655,7 @@ export async function runEngineTurn({ engine, ctx, system, input, onStep }: Aria
   reg.turns.set(key, turn);
 
   const started = new Set<string>();
+  let errored = false;
   const ownRows = new Map<string, { seq: number; label: string }>();
 
   const toolStart = (call: Record<string, unknown>) => {
@@ -709,6 +730,11 @@ export async function runEngineTurn({ engine, ctx, system, input, onStep }: Aria
     if (failed) throw new Error(`The engine reported a failure: ${failed}`);
     // A stream that ends with no finish reason and no [DONE] is an answer that broke off.
     if (!settled) throw new Error("The engine's answer broke off mid-stream.");
+  } catch (err) {
+    // A stream that dies (a 500 from the serving layer, a broken socket) is the loop's problem
+    // to report; this turn must not add a second notice on the way out.
+    errored = true;
+    throw err;
   } finally {
     ended = true;
     if (trail) clearTimeout(trail);
@@ -722,11 +748,21 @@ export async function runEngineTurn({ engine, ctx, system, input, onStep }: Aria
       // A model that asks for a tool as markup in its text is a turn that did nothing: Ariadne
       // runs a call only when the upstream returns it as a structured tool call. Say so rather
       // than let a chat quietly receive an answer that never touched its tools.
-      if (started.size === 0 && /<(toolcall|invoke)\b/.test(closed.join("") + text))
+      if (started.size === 0 && MARKUP_OPEN.test(closed.join("") + text))
         addRow(chatId, "notice", {
           level: "warning",
           code: "tool_markup",
           text: "The model asked for a tool, but its serving layer sent the call as text, so nothing ran. The upstream has to answer with a structured tool call.",
+        });
+      // A turn that produced neither text nor a tool call is a turn that did nothing. Say it:
+      // a chat that only holds the member's message reads as a reply that never arrived. A turn
+      // that errored or was stopped already gets its one notice from the loop, so this stays
+      // quiet here -- two notices for one turn reads as two problems.
+      if (!failed && !errored && !ctx.signal.aborted && started.size === 0 && said.length === 0)
+        addRow(chatId, "notice", {
+          level: "error",
+          code: "empty_answer",
+          text: "The engine finished this turn with no answer and no tool call. Check the lane's log under the home named by ARIADNE_HOME.",
         });
       // A step the stream never closed: say how it ended.
       for (const row of ownRows.values()) updateRow(chatId, row.seq, failed ? { status: "error", summary: `${row.label} (failed)` } : { status: "done" });

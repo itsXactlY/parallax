@@ -5,7 +5,7 @@ import { useRef } from "react";
 import { shortsCopy } from "@/content/shorts";
 import type { Asset, Job } from "@/lib/api";
 import { useNow } from "@/lib/browser";
-import { cn } from "@/ui";
+import { cn, imgBox } from "@/ui";
 import { TILE, TILE_GLOW, TILE_SHADE } from "./styles";
 
 const copy = shortsCopy.tile;
@@ -47,7 +47,7 @@ export function DoneTile({ job, asset, onOpen }: { job: Job; asset: Asset; onOpe
         />
       ) : (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={asset.posterUrl ?? asset.url} alt="" loading="lazy" className="absolute inset-0 size-full object-cover" />
+        <img src={asset.posterUrl ?? asset.url} alt="" loading="lazy" {...imgBox(asset)} className="absolute inset-0 size-full object-cover" />
       )}
       <span className={TILE_SHADE} />
       <span className="absolute inset-x-3 bottom-[15px] flex flex-col gap-1">

@@ -308,6 +308,7 @@ function Toolbar() {
           <label className="flex flex-col gap-1">
             <MenuLabel className="h-6">{c.soundLabel}</MenuLabel>
             <textarea
+              id="composer-sound"
               value={sound}
               maxLength={1000}
               rows={3}
@@ -427,6 +428,7 @@ export function CinemaComposer() {
         <div className="flex w-full flex-col gap-3 rounded-3xl bg-border-subtle p-3 sm:flex-row sm:items-end">
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             <textarea
+              id="composer-action"
               aria-label={c.actionLabel}
               value={action}
               maxLength={2000}

@@ -218,7 +218,7 @@ export function CanvasHome() {
               <label className="flex h-8 min-w-0 items-center gap-2 rounded-full bg-border-subtle pr-1 pl-3">
                 <span className="sr-only">{t.search.label}</span>
                 <Search className="size-4 shrink-0 text-text-secondary" strokeWidth={1.5} aria-hidden />
-                <input
+                <input id="canvas-home-query" name="canvas-home-query"
                   ref={searchRef}
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}

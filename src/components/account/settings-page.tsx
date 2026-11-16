@@ -11,7 +11,7 @@ import { routes } from "@/content/site";
 import { api, errorMessage, fetcher, type Asset, type SessionUser } from "@/lib/api";
 import { useNow } from "@/lib/browser";
 import { refreshSession, setSession, useSession } from "@/lib/session";
-import { Button, ButtonLink, Popover, PopoverContent, PopoverTrigger, Spinner, Tag, cn } from "@/ui";
+import { Button, ButtonLink, Popover, PopoverContent, PopoverTrigger, Spinner, Tag, cn, imgBox } from "@/ui";
 import { AccountFrame } from "./frame";
 import { Card, FIELD, FieldRow, GuestBanner, LoadError, LoadingCard, ROW_LINE, SignInCard, Status, formatDate, formatDateTime } from "./parts";
 
@@ -127,7 +127,7 @@ function AvatarPicker({ user, onDone }: { user: SessionUser; onDone: () => void 
                       className="block aspect-square w-full overflow-clip rounded-md bg-border-subtle transition-opacity duration-150 hover:opacity-80"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={a.posterUrl ?? a.url} alt="" loading="lazy" className="size-full object-cover" />
+                      <img src={a.posterUrl ?? a.url} alt="" loading="lazy" {...imgBox(a)} className="size-full object-cover" />
                     </button>
                   </li>
                 ))}
@@ -264,7 +264,7 @@ function EmailForm({ user, onSaved }: { user: SessionUser; onSaved: () => void }
           {user.email}
         </p>
         <input id={`${ids}-email`} type="email" className={FIELD} placeholder={signInCopy.newEmail} value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required />
-        <input
+        <input id="settings-page-password" name="settings-page-password"
           aria-label={signInCopy.currentPassword}
           type="password"
           className={FIELD}
@@ -304,7 +304,7 @@ function PasswordForm({ onSaved }: { onSaved: () => void }) {
     <form onSubmit={save} className="flex flex-col" aria-label={signInCopy.changePassword}>
       <FieldRow label={signInCopy.changePassword} htmlFor={`${ids}-cur`} help={signInCopy.passwordRule}>
         <input id={`${ids}-cur`} type="password" className={FIELD} placeholder={signInCopy.currentPassword} value={current} onChange={(e) => setCurrent(e.target.value)} autoComplete="current-password" required />
-        <input
+        <input id="settings-page-next" name="settings-page-next"
           aria-label={signInCopy.newPassword}
           type="password"
           className={FIELD}
@@ -544,7 +544,7 @@ function DeleteCard({ hasPassword }: { hasPassword: boolean }) {
         <FieldRow label={deleteCopy.typeLabel} htmlFor={`${ids}-confirm`}>
           <input id={`${ids}-confirm`} className={FIELD} value={typed} onChange={(e) => setTyped(e.target.value)} autoComplete="off" spellCheck={false} placeholder={deleteCopy.word} />
           {hasPassword ? (
-            <input aria-label={deleteCopy.password} type="password" className={FIELD} placeholder={deleteCopy.password} value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
+            <input id="settings-page-password-x" name="settings-page-password-x" aria-label={deleteCopy.password} type="password" className={FIELD} placeholder={deleteCopy.password} value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
           ) : null}
         </FieldRow>
         <div className={cn("flex flex-wrap items-center gap-3 pt-3", ROW_LINE)}>

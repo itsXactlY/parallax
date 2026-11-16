@@ -1,4 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
+import { imgBox } from "@/ui";
 import { Film } from "lucide-react";
 import type { Take } from "./data";
 
@@ -9,8 +10,8 @@ import type { Take } from "./data";
 export function TakeMedia({ take, still, className }: { take: Take; still?: boolean; className?: string }) {
   const a = take.asset;
   if (!a) return null;
-  if (a.kind === "image") return <img src={a.url} alt={take.prompt} loading="lazy" className={className} />;
-  if (still && a.posterUrl) return <img src={a.posterUrl} alt={take.prompt} loading="lazy" className={className} />;
+  if (a.kind === "image") return <img src={a.url} alt={take.prompt} loading="lazy" {...imgBox(a)} className={className} />;
+  if (still && a.posterUrl) return <img src={a.posterUrl} alt={take.prompt} loading="lazy" {...imgBox(a)} className={className} />;
   if (!a.url) return <Film className="size-6 text-text-secondary" strokeWidth={1.5} aria-hidden />;
   return (
     <video

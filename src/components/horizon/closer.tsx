@@ -103,7 +103,7 @@ function Compare({ id, words }: { id: string; words: { label: string; first: str
       <div className="absolute inset-0" style={{ clipPath: `inset(0 ${100 - split}% 0 0)` }}>
         <Artwork name={`horizon/${id}-first`} alt={words.first} className="size-full" />
       </div>
-      <input
+      <input id="closer-split" name="closer-split"
         type="range"
         min={0}
         max={100}

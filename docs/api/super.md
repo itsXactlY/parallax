@@ -573,7 +573,7 @@ it.
    `/v1/chat/completions` answers 401 without the bearer key.
 2. Make a long random engine token for Parallax (`openssl rand -hex 32`).
 3. Add Parallax to the agent's `config.yaml` with `deploy/add-parallax-to-ariadne.py`, which
-   also lists the Supercomputer tools under `tools.tool_search.always_load`:
+   also lists the Supercomputer tools under the top-level `tool_search.always_load`:
    ```yaml
    mcp_servers:
      parallax:

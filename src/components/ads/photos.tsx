@@ -6,7 +6,7 @@ import { mutate } from "swr";
 import { ads } from "@/content/ads";
 import { api, errorMessage, type Asset } from "@/lib/api";
 import { ensureSession } from "@/lib/session";
-import { Spinner, cn } from "@/ui";
+import { Spinner, cn, imgBox } from "@/ui";
 import { keys, usePhotos } from "./data";
 
 /** Uploads picture files one at a time (the API takes one per request) and returns the new assets. */
@@ -40,7 +40,7 @@ export function UploadTile({ multiple, onUploaded, className }: { multiple?: boo
         {busy ? <Spinner label={ads.pickers.uploading} /> : <ImagePlus className="size-4" strokeWidth={1.5} aria-hidden />}
         <span className="px-1 text-center text-2xs leading-3 font-medium">{busy ? ads.pickers.uploading : ads.pickers.upload}</span>
       </button>
-      <input
+      <input id="photos-file"
         ref={input}
         type="file"
         accept="image/png,image/jpeg,image/webp,image/gif"
@@ -113,7 +113,7 @@ export function PhotoGrid({
                 >
                   {/* Member files sit behind the session cookie, so next/image cannot load them. */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={asset.posterUrl ?? asset.url} alt="" loading="lazy" className="size-full object-cover" />
+                  <img src={asset.posterUrl ?? asset.url} alt="" loading="lazy" {...imgBox(asset)} className="size-full object-cover" />
                   {on ? (
                     <span className="absolute top-1 right-1 flex size-4 items-center justify-center rounded-full bg-brand text-ink">
                       <Check className="size-3" strokeWidth={2} aria-hidden />

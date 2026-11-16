@@ -61,7 +61,7 @@ export function FolderNameDialog({
         >
           <label className="flex flex-col gap-2 text-xs leading-4 font-medium text-text-secondary">
             {words.name}
-            <input
+            <input id="folders-name" name="folders-name"
               autoFocus
               value={name}
               maxLength={80}

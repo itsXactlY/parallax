@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# A private pipe between Parallax (this machine) and the machine a Hermes agent runs on.
-# Use it when the two are different machines. See docs/hermes-on-orgo.md.
+# A private pipe between Parallax (this machine) and the machine an Ariadne agent runs on.
+# Use it when the two are different machines. See docs/ariadne-on-orgo.md.
 #
 #   deploy/tunnel.sh start     open it and keep it open
 #   deploy/tunnel.sh stop      close it
@@ -21,7 +21,7 @@ PID_FILE="$ENGINE_DIR/tunnel.pid"
 LOG="$ENGINE_DIR/tunnel.log"
 LOCAL_PORT="${LOCAL_PORT:-18642}"     # this machine -> the agent's API
 REMOTE_PORT="${REMOTE_PORT:-13100}"   # the agent's machine -> Parallax
-AGENT_PORT="${AGENT_PORT:-8642}"      # the Hermes API server's port
+AGENT_PORT="${AGENT_PORT:-8642}"      # the Ariadne serve's port (`ariadne --serve 127.0.0.1:8642`)
 APP_PORT="${PORT:-3000}"              # the port Parallax listens on
 
 running() { [ -s "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2> /dev/null; }
@@ -41,7 +41,7 @@ stop() {
 
 case "${1:-status}" in
   start)
-    if [ ! -s "$CONF" ]; then echo "no $CONF yet: see docs/hermes-on-orgo.md"; exit 1; fi
+    if [ ! -s "$CONF" ]; then echo "no $CONF yet: see docs/ariadne-on-orgo.md"; exit 1; fi
     running && stop > /dev/null
     # Reconnects by itself. The log gets one line per attempt and no addresses.
     setsid nohup bash -c '

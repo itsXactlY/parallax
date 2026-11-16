@@ -89,30 +89,30 @@ export function ProductDialog({ open, onOpenChange, onSaved }: { open: boolean; 
         >
           <label className={label}>
             {ads.product.name}
-            <input className={field} value={name} maxLength={80} onChange={(e) => setName(e.target.value)} placeholder={ads.product.namePlaceholder} />
+            <input id="dialogs-name" name="dialogs-name" className={field} value={name} maxLength={80} onChange={(e) => setName(e.target.value)} placeholder={ads.product.namePlaceholder} />
           </label>
           <label className={label}>
             {ads.product.description}
-            <input className={field} value={description} maxLength={600} onChange={(e) => setDescription(e.target.value)} placeholder={ads.product.descriptionPlaceholder} />
+            <input id="dialogs-description" name="dialogs-description" className={field} value={description} maxLength={600} onChange={(e) => setDescription(e.target.value)} placeholder={ads.product.descriptionPlaceholder} />
           </label>
           <label className={label}>
             {ads.product.benefits}
-            <textarea className={`${field} h-[72px] resize-none`} value={benefits} onChange={(e) => setBenefits(e.target.value)} placeholder={ads.product.benefitsPlaceholder} />
+            <textarea id="dialogs-benefits" className={`${field} h-[72px] resize-none`} value={benefits} onChange={(e) => setBenefits(e.target.value)} placeholder={ads.product.benefitsPlaceholder} />
           </label>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <label className={label}>
               {ads.product.audience}
-              <input className={field} value={audience} maxLength={200} onChange={(e) => setAudience(e.target.value)} />
+              <input id="dialogs-audience" name="dialogs-audience" className={field} value={audience} maxLength={200} onChange={(e) => setAudience(e.target.value)} />
             </label>
             <label className={label}>
               {ads.product.price}
-              <input className={field} value={price} maxLength={40} onChange={(e) => setPrice(e.target.value)} />
+              <input id="dialogs-price" name="dialogs-price" className={field} value={price} maxLength={40} onChange={(e) => setPrice(e.target.value)} />
             </label>
           </div>
           {brands.length ? (
             <label className={label}>
               {ads.product.brand}
-              <select className={field} value={brandKitId} onChange={(e) => setBrandKitId(e.target.value)}>
+              <select id="dialogs-brandkitid" className={field} value={brandKitId} onChange={(e) => setBrandKitId(e.target.value)}>
                 <option value="">{ads.product.noBrand}</option>
                 {brands.map((b) => (
                   <option key={b.id} value={b.id}>
@@ -309,19 +309,19 @@ export function BrandsDialog({ open, onOpenChange }: { open: boolean; onOpenChan
           >
             <label className={label}>
               {ads.brand.name}
-              <input className={field} value={name} maxLength={80} onChange={(e) => setName(e.target.value)} />
+              <input id="dialogs-name-x" name="dialogs-name-x" className={field} value={name} maxLength={80} onChange={(e) => setName(e.target.value)} />
             </label>
             <label className={label}>
               {ads.brand.tone}
-              <input className={field} value={tone} maxLength={300} onChange={(e) => setTone(e.target.value)} placeholder={ads.brand.tonePlaceholder} />
+              <input id="dialogs-tone" name="dialogs-tone" className={field} value={tone} maxLength={300} onChange={(e) => setTone(e.target.value)} placeholder={ads.brand.tonePlaceholder} />
             </label>
             <label className={label}>
               {ads.brand.use}
-              <input className={field} value={use} onChange={(e) => setUse(e.target.value)} />
+              <input id="dialogs-use" name="dialogs-use" className={field} value={use} onChange={(e) => setUse(e.target.value)} />
             </label>
             <label className={label}>
               {ads.brand.avoid}
-              <input className={field} value={avoid} onChange={(e) => setAvoid(e.target.value)} />
+              <input id="dialogs-avoid" name="dialogs-avoid" className={field} value={avoid} onChange={(e) => setAvoid(e.target.value)} />
             </label>
             <Problem text={problem} />
             <Button type="submit" variant="lime" size="md" disabled={busy || !name.trim()}>

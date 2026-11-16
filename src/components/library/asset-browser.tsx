@@ -166,7 +166,7 @@ export function AssetBrowser({
         <label className={cn(BOX, "group relative w-full justify-between focus-within:bg-border-subtle sm:w-[184px]")}>
           <span className="flex min-w-0 flex-1 items-center gap-[6px]">
             <Search className="size-4 shrink-0" strokeWidth={1.5} aria-hidden />
-            <input
+            <input id="asset-browser-q" name="asset-browser-q"
               type="search"
               value={q}
               onChange={(e) => setQ(e.target.value)}

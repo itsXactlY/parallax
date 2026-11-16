@@ -297,10 +297,10 @@ function HookForm({ existing, events, onClose, onSaved }: { existing: Webhook | 
       <DialogContent title={existing ? `${t.edit} endpoint` : t.create} className="max-w-[520px]">
         <form onSubmit={submit} className="flex flex-col gap-4 p-6 pt-4">
           <Field label={t.url} hint="https on the public internet.">
-            <input type="url" required value={url} onChange={(e) => setUrl(e.target.value)} placeholder={t.urlPlaceholder} className={fieldClass} autoFocus />
+            <input id="dev-webhooks-url" name="dev-webhooks-url" type="url" required value={url} onChange={(e) => setUrl(e.target.value)} placeholder={t.urlPlaceholder} className={fieldClass} autoFocus />
           </Field>
           <Field label={t.description}>
-            <input value={description} maxLength={200} onChange={(e) => setDescription(e.target.value)} placeholder="Production" className={fieldClass} />
+            <input id="dev-webhooks-description" name="dev-webhooks-description" value={description} maxLength={200} onChange={(e) => setDescription(e.target.value)} placeholder="Production" className={fieldClass} />
           </Field>
           <fieldset className="flex flex-col gap-2">
             <legend className="mb-[6px] text-xs leading-4 font-medium text-text-nav">{t.events}</legend>

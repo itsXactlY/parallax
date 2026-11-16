@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { communityWords as w } from "@/content/community";
 import { api, errorMessage } from "@/lib/api";
-import { cn } from "@/ui";
+import { cn, imgBox } from "@/ui";
 import { Avatar, count, postHref, profileHref, useGate } from "./bits";
 import type { Post } from "./types";
 
@@ -75,7 +75,7 @@ export function PostMedia({ post, playing, className }: { post: Post; playing?: 
   return (
     // Served by our own API, so the image optimizer is not used.
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={post.media.posterUrl ?? post.media.url} alt={post.title || post.prompt || "Shared picture"} loading="lazy" className={cn("object-cover", className)} />
+    <img src={post.media.posterUrl ?? post.media.url} alt={post.title || post.prompt || "Shared picture"} loading="lazy" {...imgBox(post.media)} className={cn("object-cover", className)} />
   );
 }
 

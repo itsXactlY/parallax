@@ -379,7 +379,7 @@ function Workspace({ board: initial, save, studio }: { board: Board; save: (b: B
         </Link>
         <label className="min-w-0 flex-1 sm:flex-none">
           <span className="sr-only">{t.name}</span>
-          <input
+          <input id="board-board-name" name="board-board-name"
             value={board.name}
             onChange={(e) => change((b) => ({ ...b, name: e.target.value.slice(0, 80) }))}
             placeholder={canvasCopy.untitled}
@@ -490,6 +490,7 @@ function Workspace({ board: initial, save, studio }: { board: Board; save: (b: B
                   </div>
                 ) : editing === it.id ? (
                   <textarea
+                    id="board-editing"
                     autoFocus
                     aria-label={t.noteLabel}
                     value={it.text ?? ""}

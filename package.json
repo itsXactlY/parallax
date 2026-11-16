@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "media:sizes": "node scripts/media-sizes.mjs",
     "check:registry": "tsx scripts/check-registry.ts",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "python3 tests/run.py $(ls tests/*.py tests/ui/*.mjs | grep -v -e tests/run.py -e browser.mjs)"

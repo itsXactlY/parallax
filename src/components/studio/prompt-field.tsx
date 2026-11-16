@@ -26,6 +26,8 @@ export function PromptField({
   maxLength?: number;
   label?: string;
 }) {
+  // One field per label, so the id names the box a person is looking at.
+  const id = `prompt-${label.toLowerCase().replace(/\s+/g, "-")}`;
   const ref = useRef<HTMLTextAreaElement>(null);
 
   useLayoutEffect(() => {
@@ -37,6 +39,7 @@ export function PromptField({
 
   return (
     <textarea
+      id={id}
       ref={ref}
       rows={2}
       value={value}

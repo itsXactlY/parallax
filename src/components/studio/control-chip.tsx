@@ -92,7 +92,7 @@ function ToggleChip({ control, studio }: { control: Toggle; studio: Studio }) {
 function Range({ control, studio }: { control: Slider; studio: Studio }) {
   const value = Number(studio.values[control.id] ?? control.default);
   return (
-    <input
+    <input id={`control-${control.id}`} name="control-chip-value"
       type="range"
       min={control.min}
       max={control.max}
@@ -133,6 +133,7 @@ function SliderChip({ control, studio }: { control: Slider; studio: Studio }) {
 function TextBox({ control, studio }: { control: Text; studio: Studio }) {
   return (
     <textarea
+      id={`control-${control.id}`}
       rows={3}
       value={String(studio.values[control.id] ?? "")}
       maxLength={control.maxLength}

@@ -7,7 +7,7 @@ import { AspectGlyph } from "@/components/studio";
 import { appCopy } from "@/content/apps";
 import { api, errorMessage, fetcher, type Asset } from "@/lib/api";
 import type { Control } from "@/registry";
-import { Popover, PopoverContent, PopoverTrigger, Spinner, Switch, cn } from "@/ui";
+import { Popover, PopoverContent, PopoverTrigger, Spinner, Switch, cn, imgBox } from "@/ui";
 import type { AppField, AppInput, FieldValue } from "./types";
 
 export const panel = "rounded-2xl bg-[#131517] shadow-[#FFFFFF05_2px_2px_2px_inset]";
@@ -180,7 +180,7 @@ export function Thumb({ asset, className }: { asset: Asset; className?: string }
     return <video src={asset.url} muted preload="metadata" className={cn("object-cover", className)} />;
   }
   // eslint-disable-next-line @next/next/no-img-element
-  return <img src={asset.posterUrl ?? asset.url} alt={asset.title || ""} loading="lazy" className={cn("object-cover", className)} />;
+  return <img src={asset.posterUrl ?? asset.url} alt={asset.title || ""} loading="lazy" {...imgBox(asset)} className={cn("object-cover", className)} />;
 }
 
 function Library({ input, onPick, taken }: { input: AppInput; onPick: (a: Asset) => void; taken: string[] }) {
@@ -321,7 +321,7 @@ export function InputTile({
           </div>
         ) : null}
       </div>
-      <input ref={fileRef} type="file" accept={accept} multiple={input.max - files.length > 1} hidden aria-hidden onChange={(e) => void upload(e.target.files)} data-upload={input.id} />
+      <input id="form-parts-file" ref={fileRef} type="file" accept={accept} multiple={input.max - files.length > 1} hidden aria-hidden onChange={(e) => void upload(e.target.files)} data-upload={input.id} />
       {input.hint ? <p className="text-xs leading-4 text-text-secondary">{input.hint}</p> : null}
       {problem ? (
         <p role="alert" className="text-xs leading-4 text-danger">

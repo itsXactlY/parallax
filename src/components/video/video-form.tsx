@@ -295,7 +295,7 @@ function DropZone({ slot, studio }: { slot: MediaSlot; studio: Studio }) {
           </span>
         </button>
       )}
-      <input
+      <input id="video-form-file"
         ref={input}
         type="file"
         hidden
@@ -369,6 +369,7 @@ function PromptCard({ studio }: { studio: Studio }) {
       {open ? (
         <div className="px-3 pb-3">
           <textarea
+            id="video-form-prompt"
             value={studio.prompt}
             onChange={(e) => studio.setPrompt(e.target.value)}
             rows={4}

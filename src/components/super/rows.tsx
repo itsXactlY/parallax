@@ -22,7 +22,7 @@ import {
 import { useState, type ReactNode } from "react";
 import { copy } from "@/content/super";
 import { api, errorMessage } from "@/lib/api";
-import { Button, cn, Spinner } from "@/ui";
+import { Button, cn, Spinner, imgBox } from "@/ui";
 import type { ComputerStatus, FileRef, Row } from "./types";
 
 type B = Record<string, unknown>;
@@ -50,7 +50,7 @@ function Media({ file, alt, large }: { file: FileRef; alt: string; large?: boole
   return (
     <div className={box}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={file.posterUrl ?? file.url} alt={alt} loading="lazy" className={cn("size-full object-cover", large && "h-auto")} />
+      <img src={file.posterUrl ?? file.url} alt={alt} loading="lazy" {...imgBox(file)} className={cn("size-full object-cover", large && "h-auto")} />
     </div>
   );
 }

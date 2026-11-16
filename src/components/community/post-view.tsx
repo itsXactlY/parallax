@@ -74,15 +74,15 @@ function EditDialog({ post, open, onOpenChange, onSaved }: { post: Post; open: b
         <form onSubmit={save} className="flex flex-col gap-4 p-6 pt-4">
           <label className="flex flex-col gap-1 text-xs leading-4 font-medium text-text-secondary">
             {w.publish.titleLabel}
-            <input className={field} value={title} maxLength={120} onChange={(e) => setTitle(e.target.value)} />
+            <input id="post-view-title" name="post-view-title" className={field} value={title} maxLength={120} onChange={(e) => setTitle(e.target.value)} />
           </label>
           <label className="flex flex-col gap-1 text-xs leading-4 font-medium text-text-secondary">
             {w.publish.descriptionLabel}
-            <textarea className={cn(field, "min-h-[72px]")} value={description} maxLength={2000} onChange={(e) => setDescription(e.target.value)} />
+            <textarea id="post-view-description" className={cn(field, "min-h-[72px]")} value={description} maxLength={2000} onChange={(e) => setDescription(e.target.value)} />
           </label>
           <label className="flex flex-col gap-1 text-xs leading-4 font-medium text-text-secondary">
             {w.publish.tagsLabel}
-            <input className={field} value={tags} onChange={(e) => setTags(e.target.value)} placeholder={w.publish.tagsHint} />
+            <input id="post-view-tags" name="post-view-tags" className={field} value={tags} onChange={(e) => setTags(e.target.value)} placeholder={w.publish.tagsHint} />
           </label>
           <div className="flex items-center justify-between gap-4">
             <label htmlFor="edit-recreate" className="text-sm leading-5 font-medium">

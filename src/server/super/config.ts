@@ -1,6 +1,6 @@
 import "server-only";
 
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 
 /**
  * Settings for the agent chat. Each outside service is live only when SUPER_MODE=live

@@ -120,7 +120,7 @@ export function AppsCatalog() {
           <label className="flex h-11 w-full shrink-0 items-center gap-2 rounded-xl bg-[#FFFFFF0A] px-4 shadow-[#0000001F_0px_4px_12px] transition-colors duration-150 focus-within:bg-[#FFFFFF14] hover:bg-[#FFFFFF0F] md:w-[237px]">
             <Search className="size-5 shrink-0 text-[#FFFFFF99]" strokeWidth={1.5} aria-hidden />
             <span className="sr-only">{appsCopy.searchLabel}</span>
-            <input
+            <input id="apps-catalog-typed" name="apps-catalog-typed"
               type="search"
               value={typed}
               onChange={(e) => setTyped(e.target.value)}

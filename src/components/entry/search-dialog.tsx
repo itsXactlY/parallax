@@ -248,7 +248,7 @@ function SearchWindow({ onClose }: { onClose: () => void }) {
         <label className="flex h-[52px] min-w-0 flex-1 items-center rounded-4xl bg-[#D9D9D90A] pl-3 transition-colors duration-150 focus-within:bg-[#D9D9D914]">
           <Search className="size-6 shrink-0 text-[#737475]" strokeWidth={1.5} aria-hidden />
           <span className="sr-only">{c.title}</span>
-          <input
+          <input id="search-dialog-field" name="search-dialog-field"
             ref={inputRef}
             role="combobox"
             aria-expanded

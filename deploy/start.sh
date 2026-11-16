@@ -17,7 +17,16 @@
 #     engine.token     the token the agent uses to call Parallax's tools
 #     name.txt         the name members see (default: Ariadne)
 #     url.txt          where the agent's API is (default: http://127.0.0.1:8642, the port
-#                      `ariadne --serve 127.0.0.1:8642` listens on; tunnel.sh's local end is 18642)
+#                     `ariadne --serve 127.0.0.1:8642` listens on; tunnel.sh's local end is 18642)
+#     home.txt         an Ariadne HOME directory (config.yaml + .env). With it, Parallax starts ONE
+#                     `ariadne --serve` per chat from that home's config.yaml, each in its own lane
+#                     under <home>/lanes/<chat-id>/ (config.yaml 0600, serve.log, tape, agent
+#                     memory) -- the default in this deployment. Parallax adds its own MCP entry to
+#                     each lane's config, so the home's config.yaml does not need one. Without it
+#                     the app talks to url.txt, which holds ONE conversation for every chat.
+#     bin.txt          the ariadne binary (default: ariadne on PATH)
+#     port_base.txt    first port the lanes listen on (default: 8643; lane N takes the next
+#                      free one). Keep it clear of the port a serve you start yourself binds.
 #     off              an empty file with this name turns the engine off
 #
 # PORT (default 3000) and BIND (default 0.0.0.0) can be set when calling the script.
@@ -51,18 +60,27 @@ if [ "${1:-}" = "mock" ]; then vars+=("TREG_MODE=mock"); fi
 ENGINE_DIR="$RUN_DIR/engine"
 engine="built-in"
 if [ -s "$ENGINE_DIR/engine.token" ] && [ ! -e "$ENGINE_DIR/off" ]; then
-  url="http://127.0.0.1:18642"
+  url="http://127.0.0.1:8642"
   if [ -s "$ENGINE_DIR/url.txt" ]; then url="$(tr -d ' \n\r' < "$ENGINE_DIR/url.txt")"; fi
   name="Ariadne"
   if [ -s "$ENGINE_DIR/name.txt" ]; then name="$(head -n 1 "$ENGINE_DIR/name.txt")"; fi
   vars+=(
-    "SUPER_ENGINE=ariadne" "ARIADNE_URL=$url" "SUPER_ENGINE_NAME=$name"
     "SUPER_ENGINE=ariadne" "ARIADNE_URL=$url" "SUPER_ENGINE_NAME=$name"
     "SUPER_ENGINE_TOKEN_FILE=$ENGINE_DIR/engine.token"
   )
   # A serve endpoint on loopback with no key needs no bearer; a path that is not there is not a key.
   if [ -s "$ENGINE_DIR/ariadne.key" ]; then vars+=("ARIADNE_API_KEY_FILE=$ENGINE_DIR/ariadne.key"); fi
   engine="$name (Ariadne)"
+  # A HOME turns it into lanes: Parallax starts one `ariadne --serve` per chat from that home's
+  # config.yaml, each with its own home under lanes/<chat-id>/. One serve holds one conversation,
+  # so two chats that share one endpoint share its thread -- which is the reason this exists.
+  if [ -s "$ENGINE_DIR/home.txt" ]; then
+    home="$(tr -d ' \n\r' < "$ENGINE_DIR/home.txt")"
+    vars+=("ARIADNE_PER_CHAT=1" "ARIADNE_HOME=$home")
+    if [ -s "$ENGINE_DIR/bin.txt" ]; then vars+=("ARIADNE_BIN=$(tr -d ' \n\r' < "$ENGINE_DIR/bin.txt")"); fi
+    if [ -s "$ENGINE_DIR/port_base.txt" ]; then vars+=("ARIADNE_PORT_BASE=$(tr -d ' \n\r' < "$ENGINE_DIR/port_base.txt")"); fi
+    engine="$name (Ariadne, one serve per chat under $home)"
+  fi
 fi
 
 # Extra settings last, so they can override the defaults above.

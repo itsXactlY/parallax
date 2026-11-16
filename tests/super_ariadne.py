@@ -252,6 +252,15 @@ class Agent(http.server.BaseHTTPRequestHandler):
             out.say("><parameter name=\"fact\">the kit token is 5</parameter></invoke>")
             out.say(" Done.")
             return out.finish()
+        if text.startswith("[markup2]"):
+            # The OpenAI-style shape a served model writes: <tool_call> with a function and its
+            # parameters inside. The name in it is one the wire never offered, so nothing runs.
+            out.say("Let me store that. ")
+            out.say("<tool_call><function=parallax_remember>", 0.1)
+            out.say("<parameter=fact>the kit token is 5</parameter>")
+            out.say("</tool_call>")
+            out.say(" Done.")
+            return out.finish()
         m = re.match(r"(\[\w[\w-]*\])?\s*generate an? (image|video) of (.+)$", text, re.I)
         if m and m.group(1) == "[race]":
             # The tool call reaches the app before the text that was written ahead of it.
@@ -567,7 +576,12 @@ try:
     req = Fake.requests[-1]
     check("request: streamed to /v1/chat/completions, one model", req.get("stream") is True and req.get("model") == "ariadne" and "text/event-stream" in (req.get("_accept") or ""), str({k: req.get(k) for k in ("stream", "model")}))
     content = (req.get("messages") or [{}])[-1].get("content") or ""
-    check("request: the instructions name our tools the way Ariadne sees them", f"{MCP}_generate_media" in content and f"{MCP}_recall" in content, content[:120])
+    # Ariadne registers a server's tools under the names the server lists, so the instructions must
+    # name them bare. A prefixed name is a tool the wire never offered: a model that trusts it
+    # writes the call out as text and nothing runs.
+    check("request: the instructions name our tools bare, never prefixed",
+          "generate_media" in content and "remember" in content and f"{MCP}_generate_media" not in content,
+          content[:160])
     check("request: a shared endpoint gets the thread as text", "<chat-history>" in content, str(content)[:120])
     check("request: the member's message is marked as theirs", "<member-message>" in content, "")
     check("request: instructions carry a turn key", re.search(r'"turn": "t_[0-9a-f]{24}"', content) and Fake.keys[-1], str(Fake.keys[-1])[:4])
@@ -590,6 +604,14 @@ try:
     check("markup: the call never reaches the app", not any(s.startswith("tool:") for s in seen), str(seen))
     check("markup: the member never sees the markup itself", not any("<toolcall" in s or "<invoke" in s for s in seen), str(seen))
     check("markup: the turn says the tool did not run", "notice:tool_markup" in seen, str(seen))
+
+    # The same failure in the <tool_call> shape. A real served model wrote this on a live lane,
+    # and the member saw the XML: the block is protocol, not prose.
+    seen2 = shape(turn(cid, "[markup2] store the kit token", 40))
+    check("markup2: the call never reaches the app", not any(s.startswith("tool:") for s in seen2), str(seen2))
+    check("markup2: the member never sees the markup itself",
+          not any("<tool_call" in s or "<function=" in s or "<parameter=" in s for s in seen2), str(seen2))
+    check("markup2: the turn says the tool did not run", "notice:tool_markup" in seen2, str(seen2))
 
     # --- generate, asking first ---
     call("POST", "/api/wallet/topup", {"packId": "pack-500"})

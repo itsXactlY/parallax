@@ -6,7 +6,7 @@ import { imageCopy } from "@/content/image";
 import type { Asset, Job } from "@/lib/api";
 import { useNow } from "@/lib/browser";
 import type { Studio } from "@/lib/studio";
-import { Spinner, cn } from "@/ui";
+import { Spinner, cn, imgBox } from "@/ui";
 import type { Canceled, Workspace } from "./use-workspace";
 
 /** How many tiles sit side by side on a wide screen. Three is what the designs draw. */
@@ -51,7 +51,7 @@ function Done({ job, asset, studio, selected, selecting, onOpen, onSelect, onFav
       >
         {/* Served by our own API behind the session cookie, so the image optimizer can't fetch it. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={asset.posterUrl ?? asset.url} alt={name} loading="lazy" className="size-full object-cover" />
+        <img src={asset.posterUrl ?? asset.url} alt={name} loading="lazy" {...imgBox(asset)} className="size-full object-cover" />
       </button>
       <div
         className={cn(

@@ -45,6 +45,13 @@ So:
   `DD_HOME`) with the file and terminal tools switched off (`ARIADNE_DISABLE_TOOLS=run_terminal,write_file,edit_file,list_dir,read_file`) and no personal keys.
 - A personal agent is fine while you are the only one who can reach the app.
 
+One more thing the warning does not cover: **a lane inherits the engine home's `mcp_servers`.**
+The lane's config is the home's config plus Parallax's entry, so every server that home carries
+is offered to every chat -- a shell-capable tool pack, a memory graph, a research pod. Parallax
+switches Ariadne's own shell and file tools off (`ARIADNE_DISABLE_TOOLS`), and nothing else. Pick
+the home accordingly: the same home you drive interactively is fine for yourself, and is not a
+safe home for strangers.
+
 ## Step 1. Turn on the agent's serve
 
 On the agent's computer, with its key in the environment:
@@ -76,12 +83,19 @@ Keep both in files, not in your shell history:
 mkdir -p deploy/run/engine && chmod 700 deploy/run/engine
 ( umask 077
   openssl rand -hex 32 > deploy/run/engine/engine.token     # the agent uses this to call Parallax
-  cat > deploy/run/engine/ariadne.key                       # paste DD_SERVE_KEY, Enter, Ctrl-D
+  openssl rand -hex 32 > deploy/run/engine/ariadne.key      # the bearer the serve expects
   echo "Ariadne" > deploy/run/engine/name.txt               # the name members see
 )
 ```
 
 `deploy/run/` is ignored by git.
+
+`ariadne.key` is the serve's `DD_SERVE_KEY`, and who sets it depends on Step 5:
+
+- **Shared endpoint** (`ARIADNE_URL`): you start the serve yourself, so the key has to be in its
+  environment -- `DD_SERVE_KEY="$(cat deploy/run/engine/ariadne.key)" ariadne --serve ...`.
+- **One lane per chat** (`ARIADNE_PER_CHAT=1`): Parallax starts each serve and passes that value
+  as `DD_SERVE_KEY` in the lane's environment. You never set it; the file is the shared secret.
 
 ## Step 3. Let the two reach each other
 
@@ -178,9 +192,11 @@ npm run build
 deploy/start.sh mock        # sample files, spends nothing. Drop "mock" for real generations.
 ```
 
-The last line should end with `chat engine: Ariadne (Ariadne)`. `start.sh` switches engines by
-itself when `deploy/run/engine/` holds both secret files; an empty file named `off` in that
-folder switches back.
+The last line names the engine. It reads `chat engine: Ariadne (Ariadne)` for a shared endpoint,
+and `chat engine: Ariadne (Ariadne, one serve per chat under <home>)` when
+`deploy/run/engine/home.txt` exists. `start.sh` switches engines by itself when that folder holds
+both secret files; an empty file named `off` in it switches back, and a missing or too-short
+secret falls back with a line in `deploy/run/server.log` naming what is missing.
 
 Not using the deploy scripts? These are the settings (`.env.local` or the environment):
 
@@ -220,6 +236,62 @@ when `ARIADNE_MAX_LANES` (8) is reached, oldest first. A lane gets its own `DD_S
 so no history block is sent and deleting the chat really removes it. The lane folders are
 Parallax's to create; they hold conversation content, so keep `ARIADNE_HOME` private.
 
+## Worked example: one machine, lanes, a real agent
+
+This is what a same-machine deployment looks like when it works, on a host running a local
+served model. It was run exactly as written below, end to end.
+
+```bash
+deploy/start.sh mock
+# started, pid ..., port 3000, mode mock,
+# chat engine: Ariadne (Ariadne, one serve per chat under .../run/engine-home)
+```
+
+Send one message to a new chat. The lane starts, and the serve boots with every server the home
+carries plus Parallax's tools (10 in mock mode; `computer_*` and the connector tools
+join only when those services are live):
+
+```
+run/engine-home/lanes/sch_.../
+  config.yaml   0600  the home's config + mcp_servers.parallax
+  serve.log     ariadne serve: http://127.0.0.1:8643 · Architect · 96 tools · bearer token required
+  state/ cache/ logs/ learn/      the lane's own tape, memory and logs -- nothing else sees them
+```
+
+A real turn in **Ask** mode, message *"Make me a poster of a lighthouse at dusk, 16:9. Ask me
+first."*, answered by the member as the cards arrive:
+
+```
+tool      list_models   done     Listed 8 models
+card      question      pending  Before I generate -- what look do you want for the poster?
+                          answered with { "choice": "16:9" }
+tool      get_model     done     Read Nano Banana Pro
+card      question      pending  Ratio locked to 16:9. One more: which look?
+                          answered with { "choice": "typographic" }
+tool      generate_media running
+card      approval      pending  price 4200 credits
+                          approved with { "decision": "allow" }
+card      result        succeeded  ast_HGV7UtxndDxs2ylN   model nano-banana-pro
+tool      remember      done     Saved to memory
+message   assistant     Done -- a 16:9 dusk poster, generated on Nano Banana Pro at 2K.
+```
+
+Nothing about the generation key reached the agent: the price came from Parallax's quote, the
+charge hit the member's own balance, and the file went into their library.
+
+Three things this machine taught, all documented above and worth checking on your own:
+
+- **A local served model is slow.** One step took minutes, so a turn with several tool calls can
+  pass the 5-minute `SUPER_TURN_MS` and end with `time_limit`. Raise it (`deploy/run/env`) for a
+  lane on a local model; the setting is honoured up to a 30-minute ceiling.
+- **`always_load` is what makes the tools reachable.** Without it the agent answered "there is no
+  remember tool in my tool list": the tools existed, they were just behind `find()`.
+- **A served model can hand a call back as text.** When it does, nothing runs. Parallax hides the
+  markup and says so (`notice:tool_markup`); the wire only runs a call that arrives as structured
+  `tool_calls`. The notes Parallax sends name the tools exactly as the wire offers them
+  (`generate_media`, never `parallax_generate_media`), which is what stops a model from inventing
+  a name and writing the call out by hand.
+
 ## Step 6. Try it
 
 1. Open `/supercomputer` and send: *"Make me a poster of a lighthouse at dusk."*
@@ -240,6 +312,8 @@ Parallax's to create; they hold conversation content, so keep `ARIADNE_HOME` pri
 | 404 from `/api/super/mcp` | Parallax is running the built-in engine. |
 | A long render is cut off | `timeout` in the MCP entry is too low. Ariadne's default is 60 seconds; keep it above 2100. |
 | A reply starts with "the conversation is still working" | Another chat is using the same serve. Serve one lane per chat (`ARIADNE_PER_CHAT=1`), or send one chat at a time. |
+| "This reply took too long and was stopped." (`time_limit`) | A turn ran past `SUPER_TURN_MS` (5 minutes of working time, not counting waits for you). A local served model can take minutes *per step*, so a four-step turn does not fit. Raise it in `deploy/run/env` or `.env.local`: `SUPER_TURN_MS=1800000`. |
+| The member sees raw `<tool_call>` / `<toolcall>` XML | The serving layer handed the model's call back as text instead of structured `tool_calls`, so nothing ran. Parallax hides the markup and says the tool did not run (`notice:tool_markup`); if you still see markup, that shape is not covered -- report it. |
 
 ## What the agent can and cannot do in Parallax
 

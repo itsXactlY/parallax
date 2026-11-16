@@ -50,7 +50,7 @@ export function MoveMenu({ ids, folders, current, trigger, onDone }: { ids: stri
             }
           }}
         >
-          <input
+          <input id="selection-bar-name" name="selection-bar-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             maxLength={80}

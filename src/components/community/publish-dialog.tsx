@@ -8,7 +8,7 @@ import { communityWords as w } from "@/content/community";
 import { routes } from "@/content/site";
 import { api, errorMessage, fetcher, type Asset } from "@/lib/api";
 import { useSession } from "@/lib/session";
-import { Button, ButtonLink, Dialog, DialogContent, Spinner, Switch, cn } from "@/ui";
+import { Button, ButtonLink, Dialog, DialogContent, Spinner, Switch, cn, imgBox } from "@/ui";
 import { postHref } from "./bits";
 import type { Post } from "./types";
 
@@ -23,7 +23,7 @@ function Thumb({ asset }: { asset: Asset }) {
       </span>
     );
   // eslint-disable-next-line @next/next/no-img-element
-  return <img src={asset.posterUrl ?? asset.url} alt={asset.prompt || asset.title || "Your result"} loading="lazy" className="size-full object-cover" />;
+  return <img src={asset.posterUrl ?? asset.url} alt={asset.prompt || asset.title || "Your result"} loading="lazy" {...imgBox(asset)} className="size-full object-cover" />;
 }
 
 function Form({ onDone }: { onDone: (post: Post) => void }) {
@@ -103,15 +103,15 @@ function Form({ onDone }: { onDone: (post: Post) => void }) {
       </fieldset>
       <label className="flex flex-col gap-1 text-xs leading-4 font-medium text-text-secondary">
         {w.publish.titleLabel}
-        <input className={field} value={title} maxLength={120} onChange={(e) => setTitle(e.target.value)} placeholder={chosen?.prompt.slice(0, 60) || ""} />
+        <input id="publish-dialog-title" name="publish-dialog-title" className={field} value={title} maxLength={120} onChange={(e) => setTitle(e.target.value)} placeholder={chosen?.prompt.slice(0, 60) || ""} />
       </label>
       <label className="flex flex-col gap-1 text-xs leading-4 font-medium text-text-secondary">
         {w.publish.descriptionLabel}
-        <textarea className={cn(field, "min-h-[72px] resize-y")} value={description} maxLength={2000} onChange={(e) => setDescription(e.target.value)} />
+        <textarea id="publish-dialog-description" className={cn(field, "min-h-[72px] resize-y")} value={description} maxLength={2000} onChange={(e) => setDescription(e.target.value)} />
       </label>
       <label className="flex flex-col gap-1 text-xs leading-4 font-medium text-text-secondary">
         {w.publish.tagsLabel}
-        <input className={field} value={tags} onChange={(e) => setTags(e.target.value)} placeholder={w.publish.tagsHint} />
+        <input id="publish-dialog-tags" name="publish-dialog-tags" className={field} value={tags} onChange={(e) => setTags(e.target.value)} placeholder={w.publish.tagsHint} />
       </label>
       <div className="flex items-center justify-between gap-4">
         <label htmlFor="publish-recreate" className="flex flex-col">

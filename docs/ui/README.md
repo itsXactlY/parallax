@@ -257,8 +257,14 @@ returns. For your feature's shapes, write types in your own files from the API p
 
   ```tsx
   {/* eslint-disable-next-line @next/next/no-img-element */}
-  <img src={asset.posterUrl ?? asset.url} alt={job.prompt} loading="lazy" className="size-full object-cover" />
+  <img src={asset.posterUrl ?? asset.url} alt={job.prompt} loading="lazy" {...imgBox(asset)} className="size-full object-cover" />
   ```
+
+  `imgBox(asset)` from `@/ui` puts the picture's natural `width` and `height` on the tag. A lazy
+  image with no reserved box starts at 0x0 and grows when its bytes land, which pushes the page
+  around (cumulative layout shift); the attributes give the browser a box before the request
+  starts, and `object-cover` still crops it to whatever the container says. It returns `{}` when
+  the record has no dimensions, so nothing is invented. Use it on every lazy member file.
 
   `src/components/image/results.tsx` shows the whole pattern: finished, pending and failed tiles.
 - **Decorative and sample pictures** (heroes, covers, preset tiles, banners) are `Artwork` slots:
@@ -272,6 +278,10 @@ returns. For your feature's shapes, write types in your own files from the API p
   picture exists for the name, the slot is a soft gradient that is different for each name.
   A picture is added by name in `src/content/media.ts`, with its file under `public/media/`.
   Every file there must be your own work or made with Parallax.
+
+  `Artwork` carries each slot's natural size from `src/content/media-sizes.ts`, which is
+  generated from the files by `npm run media:sizes`. Rerun that script after adding or
+  replacing a picture, or the attributes on the slot will be wrong.
 - Do not load pictures, video or fonts from another site. Never hotlink. A page must look
   finished with gradient slots.
 
@@ -339,6 +349,12 @@ npm run build          # must pass (stop your dev server first)
 python3 tests/run.py tests/core_e2e.py tests/ui/<your feature>.mjs        # must pass
 UI_SIZE="390 844" python3 tests/run.py tests/ui/<your feature>.mjs        # must pass at phone size
 ```
+
+`tests/ui/page-quality.mjs` is the site-wide gate for what Chrome itself flags in DevTools
+("Page errors", "Improvements"): a stylesheet that 404s, a lazy `<img>` with no box, an `<input>`
+with neither id nor name, and a scroll that shifts the layout. Run it over your new screen as
+well as the list it already walks, and keep it green: a screen that 404s fails the gate rather
+than passing it, because the 404 page has no images and no fields to check.
 
 Screenshots land in `ui-shots/<your feature>/` (and `ui-shots/<your feature>-390/`). Open them
 and look: position, size, colour, type. Fix what is off and run again. The browser log printed

@@ -45,7 +45,7 @@ function LinkCard({ r }: { r: Referral }) {
       <div className={cn("flex flex-col gap-2 pt-3 sm:flex-row", ROW_LINE)}>
         <span className="relative min-w-0 grow">
           <Link2 className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-text-secondary" strokeWidth={1.5} aria-hidden />
-          <input readOnly aria-label={c.link} value={link} onFocus={(e) => e.currentTarget.select()} className={cn(FIELD, "pl-9 font-mono text-xs")} data-testid="invite-link" />
+          <input id="invite-page-link" name="invite-page-link" readOnly aria-label={c.link} value={link} onFocus={(e) => e.currentTarget.select()} className={cn(FIELD, "pl-9 font-mono text-xs")} data-testid="invite-link" />
         </span>
         <Button variant="lime" size="md" onClick={copy} aria-live="polite">
           {copied ? <Check className="size-4" strokeWidth={1.5} aria-hidden /> : <Copy className="size-4" strokeWidth={1.5} aria-hidden />}

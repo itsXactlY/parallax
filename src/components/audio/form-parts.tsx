@@ -201,7 +201,7 @@ function SliderRow({ control, studio }: { control: Slider; studio: Studio }) {
   return (
     <label className={cn(block, "flex h-12 shrink-0 items-center gap-3 px-3")} title={control.hint}>
       <span className="w-[72px] shrink-0 text-sm leading-5 font-medium text-text-primary">{control.label}</span>
-      <input
+      <input id="form-parts-value" name="form-parts-value"
         type="range"
         min={control.min}
         max={control.max}

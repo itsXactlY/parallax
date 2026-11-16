@@ -76,7 +76,7 @@ function CampaignRow({ c, active, actions }: { c: Campaign; active: boolean; act
           if (name.trim() && name.trim() !== c.name) await act(() => actions.onRename(c, name.trim()));
         }}
       >
-        <input
+        <input id="sidebar-name" name="sidebar-name"
           autoFocus
           aria-label={ads.sidebar.rename}
           value={name}

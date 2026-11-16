@@ -137,7 +137,7 @@ function SceneRow({ scene, index, ids }: { scene: Scene; index: number; ids: str
     <li className="flex flex-col gap-2 rounded-2xl border border-border-subtle p-3" data-scene={scene.id}>
       <div className="flex items-center gap-2">
         <span className="font-mono text-xs leading-4 text-text-tertiary">{scene.number}</span>
-        <input
+        <input id="storyboard-title" name="storyboard-title"
           aria-label={t.sceneTitle}
           value={title}
           maxLength={120}

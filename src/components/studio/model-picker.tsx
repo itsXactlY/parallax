@@ -126,7 +126,7 @@ export function ModelPicker({ studio }: { studio: Studio }) {
           <span className="flex size-6 shrink-0 items-center justify-center">
             <Search className="size-5" strokeWidth={1.5} aria-hidden />
           </span>
-          <input
+          <input id="model-picker-query" name="model-picker-query"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {

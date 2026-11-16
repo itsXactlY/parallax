@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { tileWords } from "@/content/home";
 import { routes } from "@/content/site";
-import { cn } from "@/ui";
+import { cn, imgBox } from "@/ui";
 import { aspectOf, initials, shortCount, stillOf, type Author, type Post } from "./feed";
 
 export type TileLook = "shorts" | "mosaic" | "wide" | "masonry";
@@ -58,7 +58,7 @@ function TileMedia({ post, videoRef }: { post: Post; videoRef: React.RefObject<H
   }
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={still ?? post.media.url} alt="" loading="lazy" decoding="async" className="absolute inset-0 size-full object-cover" />
+    <img src={still ?? post.media.url} alt="" loading="lazy" decoding="async" {...imgBox(post.media)} className="absolute inset-0 size-full object-cover" />
   );
 }
 

@@ -49,6 +49,7 @@ export function UsagePanel() {
         <label className="flex items-center gap-2 text-xs leading-4 font-medium text-text-nav">
           {t.keyFilter}
           <select
+            id="dev-usage-keyid"
             value={keyId}
             onChange={(e) => {
               setKeyId(e.target.value);

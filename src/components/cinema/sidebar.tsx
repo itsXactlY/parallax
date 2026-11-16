@@ -129,7 +129,7 @@ function ProjectRow({ project, active, onOpen }: { project: Project; active: boo
           >
             <label className="flex flex-col gap-2 text-xs leading-4 font-medium text-text-secondary">
               {t.nameLabel}
-              <input
+              <input id="sidebar-name" name="sidebar-name"
                 autoFocus
                 value={name}
                 maxLength={120}
@@ -304,7 +304,7 @@ export function Sidebar({ onCollapse, onNavigate }: { onCollapse: () => void; on
           </div>
         </div>
         {searching ? (
-          <input
+          <input id="sidebar-query" name="sidebar-query"
             autoFocus
             aria-label={t.search}
             placeholder={t.searchPlaceholder}

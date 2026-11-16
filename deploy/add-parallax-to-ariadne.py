@@ -146,7 +146,7 @@ if not a.remove and not a.no_always_load:
     if ts is None:
         if lines and lines[-1].strip():
             lines.append('')
-        lines += ['tool_search:', '  always_load:'] + [f'    - {n}' for n in SUPER_TOOLS] + ['']
+        lines += ['tool_search:', '  always_load:'] + [f'  - {n}' for n in SUPER_TOOLS] + ['']
     else:
         # Find the always_load list inside the section and add the names it does not have.
         at = None

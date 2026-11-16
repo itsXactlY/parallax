@@ -1,4 +1,5 @@
 import { media } from "@/content/media";
+import { mediaSizes } from "@/content/media-sizes";
 import { cn } from "./cn";
 
 /** A steady number from a name, so a slot looks the same on the server, in the browser and tomorrow. */
@@ -26,8 +27,24 @@ function hash(name: string) {
 export function Artwork({ name, alt = "", className }: { name: string; alt?: string; className?: string }) {
   const src = media[name];
   if (src) {
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img src={src} alt={alt} loading="lazy" decoding="async" data-artwork={name} className={cn("object-cover", className)} />;
+    // The natural size comes from the file itself (scripts/media-sizes.mjs). A lazy image with
+    // no box to reserve expands when its bytes land and pushes the page around; width and
+    // height give it a box before the request starts. `object-cover` still crops it to
+    // whatever the className says.
+    const size = mediaSizes[name];
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={src}
+        alt={alt}
+        loading="lazy"
+        decoding="async"
+        data-artwork={name}
+        width={size?.[0]}
+        height={size?.[1]}
+        className={cn("object-cover", className)}
+      />
+    );
   }
   const h = hash(name);
   const hue = h % 360;

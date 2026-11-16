@@ -18,7 +18,7 @@ import { api, errorMessage, type Asset, type Job } from "@/lib/api";
 import { useNow } from "@/lib/browser";
 import { useSession } from "@/lib/session";
 import { jobsKey } from "@/lib/studio";
-import { Button, Dialog, DialogContent, Spinner, cn } from "@/ui";
+import { Button, Dialog, DialogContent, Spinner, cn, imgBox } from "@/ui";
 
 const copy = remixCopy.history;
 const tile =
@@ -69,6 +69,7 @@ function Done({
             src={asset.posterUrl ?? asset.url}
             alt=""
             loading="lazy"
+            {...imgBox(asset)}
             className="size-full object-cover"
           />
         )}

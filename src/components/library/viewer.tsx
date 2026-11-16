@@ -258,7 +258,7 @@ function ViewerBody({ asset, folders, onClose, onPrev, onNext }: { asset: Asset;
                 <p className="text-xs leading-4 text-text-secondary">{words.publishNote}</p>
                 <label className="flex flex-col gap-1 text-xs leading-4 text-text-secondary">
                   {words.publishField}
-                  <input
+                  <input id="viewer-title" name="viewer-title"
                     value={title}
                     maxLength={120}
                     onChange={(e) => setTitle(e.target.value)}

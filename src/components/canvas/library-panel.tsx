@@ -5,7 +5,7 @@ import useSWRInfinite from "swr/infinite";
 import { canvasCopy } from "@/content/canvas";
 import { errorMessage, fetcher, type Asset } from "@/lib/api";
 import { useSession } from "@/lib/session";
-import { cn } from "@/ui";
+import { cn, imgBox } from "@/ui";
 
 const t = canvasCopy.library;
 
@@ -83,7 +83,7 @@ export function LibraryPanel({ onClose, onAdd, onSignIn }: { onClose: () => void
                 className="block aspect-square w-full overflow-hidden rounded-lg bg-surface-secondary transition-opacity duration-150 hover:opacity-80"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={a.posterUrl ?? a.url} alt="" loading="lazy" draggable={false} className="size-full object-cover" />
+                <img src={a.posterUrl ?? a.url} alt="" loading="lazy" {...imgBox(a)} draggable={false} className="size-full object-cover" />
               </button>
             </li>
           ))}

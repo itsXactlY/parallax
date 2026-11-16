@@ -6,7 +6,7 @@ import { useRef, useState, type ReactNode } from "react";
 import useSWR from "swr";
 import { cinema } from "@/content/cinema";
 import { api, fetcher, type Asset } from "@/lib/api";
-import { Button, Dialog, DialogContent, MenuLabel, Popover, PopoverContent, PopoverTrigger, cn } from "@/ui";
+import { Button, Dialog, DialogContent, MenuLabel, Popover, PopoverContent, PopoverTrigger, cn, imgBox } from "@/ui";
 import { refreshProject, type CinemaElement, type ElementKind } from "./data";
 import { useCinema } from "./state";
 
@@ -188,11 +188,11 @@ function NewElement({ projectId, onDone }: { projectId: string; onDone: () => vo
       </div>
       <label className="flex flex-col gap-1 text-xs leading-4 font-medium text-text-secondary">
         {t.nameLabel}
-        <input value={name} maxLength={80} required placeholder={t.namePlaceholder} onChange={(e) => setName(e.target.value)} className={cn(fieldClass, "h-10")} />
+        <input id="cast-name" name="cast-name" value={name} maxLength={80} required placeholder={t.namePlaceholder} onChange={(e) => setName(e.target.value)} className={cn(fieldClass, "h-10")} />
       </label>
       <label className="flex flex-col gap-1 text-xs leading-4 font-medium text-text-secondary">
         {t.descLabel}
-        <textarea value={description} maxLength={1000} rows={2} placeholder={t.descPlaceholder} onChange={(e) => setDescription(e.target.value)} className={cn(fieldClass, "resize-none py-2")} />
+        <textarea id="cast-description" value={description} maxLength={1000} rows={2} placeholder={t.descPlaceholder} onChange={(e) => setDescription(e.target.value)} className={cn(fieldClass, "resize-none py-2")} />
       </label>
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
@@ -203,7 +203,7 @@ function NewElement({ projectId, onDone }: { projectId: string; onDone: () => vo
             {uploading ? <LoaderCircle className="size-4 animate-spin" strokeWidth={1.5} aria-hidden /> : <ImagePlus className="size-4" strokeWidth={1.5} aria-hidden />}
             {uploading ? t.uploading : t.upload}
           </Button>
-          <input ref={file} type="file" accept="image/*" multiple hidden onChange={(e) => void upload(e.target.files)} aria-label={t.upload} />
+          <input id="cast-file" ref={file} type="file" accept="image/*" multiple hidden onChange={(e) => void upload(e.target.files)} aria-label={t.upload} />
         </div>
         <span className="text-xs leading-4 text-text-tertiary">{t.yourImages}</span>
         {images.data?.assets.length ? (
@@ -219,7 +219,7 @@ function NewElement({ projectId, onDone }: { projectId: string; onDone: () => vo
                     onClick={() => togglePick({ id: a.id, url: a.url })}
                     className={cn("relative block aspect-square w-full overflow-clip rounded-md border-2", on ? "border-brand" : "border-transparent hover:border-border-strong")}
                   >
-                    <img src={a.url} alt="" loading="lazy" className="size-full object-cover" />
+                    <img src={a.url} alt="" loading="lazy" {...imgBox(a)} className="size-full object-cover" />
                     {on ? (
                       <span className="absolute top-1 right-1 flex size-4 items-center justify-center rounded-full bg-brand text-ink">
                         <Check className="size-3" strokeWidth={2} aria-hidden />

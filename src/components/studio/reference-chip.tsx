@@ -7,7 +7,7 @@ import { fetcher, type Asset } from "@/lib/api";
 import { useSession } from "@/lib/session";
 import type { Studio } from "@/lib/studio";
 import type { MediaSlot } from "@/registry";
-import { MenuItem, MenuLabel, Popover, PopoverContent, PopoverTrigger, cn } from "@/ui";
+import { MenuItem, MenuLabel, Popover, PopoverContent, PopoverTrigger, cn, imgBox } from "@/ui";
 
 /** A square preview of anything in the library: the picture, a video's poster, or an icon for sound. */
 export function AssetThumb({ asset }: { asset: Asset }) {
@@ -22,7 +22,7 @@ export function AssetThumb({ asset }: { asset: Asset }) {
   }
   // Served by our own API behind the session cookie, so the image optimizer can't fetch it.
   // eslint-disable-next-line @next/next/no-img-element
-  return <img src={src} alt="" loading="lazy" className="size-full object-cover" />;
+  return <img src={src} alt="" loading="lazy" {...imgBox(asset)} className="size-full object-cover" />;
 }
 
 /** The small previews of what is attached, each with a remove button, plus a shimmer per file still uploading. */
@@ -141,7 +141,7 @@ export function ReferenceChip({ studio }: { studio: Studio }) {
 
   return (
     <div title={why} className={cn("flex h-8 shrink-0 items-center overflow-clip rounded-md bg-border-subtle", none && "opacity-40")}>
-      <input
+      <input id="reference-chip-file"
         ref={input}
         type="file"
         hidden

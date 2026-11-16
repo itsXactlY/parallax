@@ -128,7 +128,7 @@ export function Field({ label, hint, children }: { label: string; hint?: string;
 export function Check({ checked, onChange, label, hint }: { checked: boolean; onChange: (v: boolean) => void; label: string; hint?: string }) {
   return (
     <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border-subtle px-3 py-[10px] transition-colors duration-150 hover:bg-border-subtle">
-      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="mt-[2px] size-4 shrink-0 accent-[#D1FE17]" />
+      <input id="dev-parts-checkbox" name="dev-parts-checkbox" type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="mt-[2px] size-4 shrink-0 accent-[#D1FE17]" />
       <span className="flex min-w-0 flex-col gap-[2px]">
         <span className="font-mono text-sm leading-5 text-text-primary">{label}</span>
         {hint ? <span className="text-xs leading-4 text-text-secondary">{hint}</span> : null}

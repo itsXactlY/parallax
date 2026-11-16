@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import useSWR from "swr";
 import { library } from "@/content/library";
 import { api, errorMessage, fetcher } from "@/lib/api";
-import { Button, cn, Dialog, DialogContent, MenuItem, Popover, PopoverContent, PopoverTrigger } from "@/ui";
+import { Button, cn, Dialog, DialogContent, MenuItem, Popover, PopoverContent, PopoverTrigger, imgBox } from "@/ui";
 import { BOX, ConfirmDialog, EmptyState, ErrorLine, PanelHeader } from "./common";
 import { refreshLibrary, type ElementType, type LibElement, type LibraryPage } from "./data";
 
@@ -38,7 +38,7 @@ export function ElementsView() {
       <PanelHeader title={words.title}>
         <label className={cn(BOX, "w-full focus-within:bg-border-subtle sm:w-[184px]")}>
           <Search className="size-4 shrink-0" strokeWidth={1.5} aria-hidden />
-          <input
+          <input id="elements-q" name="elements-q"
             type="search"
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -99,7 +99,7 @@ export function ElementsView() {
                 <div className="relative aspect-square bg-[#222222]">
                   {el.cover ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={el.cover.url} alt="" loading="lazy" className="size-full object-cover" />
+                    <img src={el.cover.url} alt="" loading="lazy" {...imgBox(el.cover)} className="size-full object-cover" />
                   ) : null}
                   <span className="absolute top-2 left-2 rounded-sm bg-scrim px-[6px] text-2xs leading-[18px] font-semibold text-text-primary">
                     {words.types.find((t) => t.id === el.type)?.label}
@@ -207,7 +207,7 @@ function ElementForm({ element, onDone }: { element: LibElement | null; onDone: 
       <div className="grid gap-3 sm:grid-cols-[160px_1fr]">
         <label className="flex flex-col gap-2 text-xs leading-4 font-medium text-text-secondary">
           {words.fields.type}
-          <select value={type} onChange={(e) => setType(e.target.value as ElementType)} className={cn(field, "h-10")}>
+          <select id="elements-type" value={type} onChange={(e) => setType(e.target.value as ElementType)} className={cn(field, "h-10")}>
             {words.types
               .filter((t) => t.id !== "all")
               .map((t) => (
@@ -219,16 +219,16 @@ function ElementForm({ element, onDone }: { element: LibElement | null; onDone: 
         </label>
         <label className="flex flex-col gap-2 text-xs leading-4 font-medium text-text-secondary">
           {words.fields.name}
-          <input required value={name} maxLength={60} onChange={(e) => setName(e.target.value)} className={cn(field, "h-10")} />
+          <input id="elements-name" name="elements-name" required value={name} maxLength={60} onChange={(e) => setName(e.target.value)} className={cn(field, "h-10")} />
         </label>
       </div>
       <label className="flex flex-col gap-2 text-xs leading-4 font-medium text-text-secondary">
         {words.fields.description}
-        <textarea value={description} maxLength={1000} rows={2} onChange={(e) => setDescription(e.target.value)} className={cn(field, "resize-none py-2")} />
+        <textarea id="elements-description" value={description} maxLength={1000} rows={2} onChange={(e) => setDescription(e.target.value)} className={cn(field, "resize-none py-2")} />
       </label>
       <label className="flex flex-col gap-2 text-xs leading-4 font-medium text-text-secondary">
         {words.fields.tags}
-        <input value={tags} onChange={(e) => setTags(e.target.value)} className={cn(field, "h-10")} />
+        <input id="elements-tags" name="elements-tags" value={tags} onChange={(e) => setTags(e.target.value)} className={cn(field, "h-10")} />
       </label>
       <fieldset className="flex flex-col gap-2">
         <legend className="pb-2 text-xs leading-4 font-medium text-text-secondary">
@@ -254,7 +254,7 @@ function ElementForm({ element, onDone }: { element: LibElement | null; onDone: 
                     className={cn("size-full overflow-hidden rounded-md", at >= 0 && "outline-2 -outline-offset-2 outline-brand")}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={a.url} alt="" loading="lazy" className="size-full object-cover" />
+                    <img src={a.url} alt="" loading="lazy" {...imgBox(a)} className="size-full object-cover" />
                   </button>
                   {at >= 0 ? (
                     <span className="pointer-events-none absolute top-1 left-1 flex size-5 items-center justify-center rounded-full bg-brand text-2xs leading-3 font-bold text-ink">{at + 1}</span>

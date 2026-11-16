@@ -316,7 +316,7 @@ export function Library() {
         ) : null}
       </section>
 
-      <input
+      <input id="library-file"
         ref={fileInput}
         type="file"
         multiple

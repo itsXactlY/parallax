@@ -194,7 +194,7 @@ export function SuperComposer({
           />
           <div className="flex h-8 items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-1">
-              <input ref={picker} type="file" multiple accept="image/*,video/*,audio/*" className="hidden" onChange={(e) => void upload(e.target.files).then(() => (e.target.value = ""))} />
+              <input id="composer-file" ref={picker} type="file" multiple accept="image/*,video/*,audio/*" className="hidden" onChange={(e) => void upload(e.target.files).then(() => (e.target.value = ""))} />
               <button
                 type="button"
                 aria-label={copy.composer.attach}

@@ -127,7 +127,7 @@ function Player({ asset, label }: { asset: Asset; label: string }) {
         {playing ? <Pause className="size-4 fill-current" strokeWidth={1.5} aria-hidden /> : <Play className="ml-[2px] size-4 fill-current" strokeWidth={1.5} aria-hidden />}
       </button>
       <div className="flex min-w-0 flex-1 items-center gap-2">
-        <input
+        <input id="track-row-math-min-at-length-1" name="track-row-math-min-at-length-1"
           type="range"
           min={0}
           max={length || 1}
