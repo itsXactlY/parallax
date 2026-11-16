@@ -8,8 +8,11 @@ import { publish } from "./hub";
 
 /**
  * One cloud computer per member, created on first use and suspended when idle.
- * Live: the Orgo REST API. Mock: a pretend computer that echoes commands and returns
- * a tiny PNG drawn in code.
+ * One computer per member, created on first use and suspended when idle.
+ * Live: a computer service you run yourself, over the REST shape below — the same shape
+ * our own encapsulated OS image serves, so swapping in our image changes the base URL and
+ * nothing else. Mock: a pretend computer that echoes commands and returns a tiny PNG drawn
+ * in code.
  */
 
 export interface Shot {
@@ -33,16 +36,17 @@ export interface ComputerClient {
 
 /* ---------------------------------- live ---------------------------------- */
 
-const ORGO = "https://www.orgo.ai/api";
+/** Where the computer service lives. Default: our own service on this machine. */
+const API_BASE = process.env.COMPUTER_API_BASE_URL || "http://127.0.0.1:8081/api";
 
-class OrgoComputer implements ComputerClient {
+class RemoteComputer implements ComputerClient {
   readonly live = true;
-  private workspaceId: string | null = process.env.ORGO_WORKSPACE_ID || null;
+  private workspaceId: string | null = process.env.COMPUTER_WORKSPACE_ID || null;
 
   private async call<T>(method: string, path: string, body?: unknown, timeoutMs = 60_000): Promise<T> {
-    const res = await fetch(ORGO + path, {
+    const res = await fetch(API_BASE + path, {
       method,
-      headers: { Authorization: `Bearer ${process.env.ORGO_API_KEY}`, "Content-Type": "application/json" },
+      headers: { Authorization: `Bearer ${process.env.COMPUTER_API_KEY}`, "Content-Type": "application/json" },
       body: body === undefined ? undefined : JSON.stringify(body),
       signal: AbortSignal.timeout(timeoutMs),
     });
@@ -73,7 +77,7 @@ class OrgoComputer implements ComputerClient {
   async create(name: string) {
     const ws = await this.workspace();
     const c = await this.call<{ id: string }>("POST", "/computers", { workspace_id: ws, name, os: "linux", ram: 4, cpu: 2, resolution: "1280x720x24" }, 180_000);
-    // Suspend after idle minutes on Orgo's side as well, as a second safety net.
+    // Ask the service to stop after idle minutes as well, as a second safety net.
     await this.call("PATCH", `/computers/${c.id}/resize`, { auto_stop_minutes: Math.round(limits.computerIdleMs() / 60_000) }).catch(() => {});
     return { externalId: c.id };
   }
@@ -155,7 +159,7 @@ const holder = globalThis as unknown as { __superComputer?: ComputerClient };
 
 export function computerClient(): ComputerClient {
   const live = serviceMode("computer") === "live";
-  if (!holder.__superComputer || holder.__superComputer.live !== live) holder.__superComputer = live ? new OrgoComputer() : new MockComputer();
+  if (!holder.__superComputer || holder.__superComputer.live !== live) holder.__superComputer = live ? new RemoteComputer() : new MockComputer();
   return holder.__superComputer;
 }
 

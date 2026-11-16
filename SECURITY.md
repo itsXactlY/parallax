@@ -12,7 +12,7 @@ steps to reproduce it.
 - Set `TREG_DAILY_BUDGET_USD`. It caps what the server can spend in a day.
 - Payments are not connected. Credits are granted by the app itself; do not sell them.
 - If Supercomputer runs on an Ariadne agent, read the warning in
-  [`docs/ariadne-on-orgo.md`](docs/ariadne-on-orgo.md): the agent's own tools are not behind
+  [`docs/ariadne-agent.md`](docs/ariadne-agent.md): the agent's own tools are not behind
   Parallax's approval cards. Use a narrow agent for anything public.
   With `ARIADNE_PER_CHAT=1` each lane keeps its own conversation, logs and agent memory under
   `ARIADNE_HOME/lanes/<chat-id>/`, and its config file holds the engine token. Keep that

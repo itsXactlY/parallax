@@ -64,7 +64,7 @@ music models, each with its own controls and an exact price shown before you pre
 `TREG_DAILY_BUDGET_USD` stops paid requests once that much was spent in 24 hours. Keep it low
 while you try things out.
 
-## Supercomputer, on an Ariadne agent, on Orgo
+## Supercomputer, on an Ariadne agent
 
 Supercomputer is the agent chat at `/supercomputer`. It can run on three things:
 
@@ -72,7 +72,7 @@ Supercomputer is the agent chat at `/supercomputer`. It can run on three things:
 |---|---|---|
 | Stand-in (default) | A scripted assistant, so the screens work with no keys | Nothing |
 | Built-in | Parallax runs the agent loop itself | `SUPER_MODE=live` and a model key |
-| **Ariadne** | Your own Ariadne agent (`ariadne --serve`) runs the conversation | An Ariadne agent, for example on an [Orgo](https://www.orgo.ai) computer |
+| **Ariadne** | Your own Ariadne agent (`ariadne --serve`) runs the conversation | An Ariadne agent, on any computer you run |
 
 With the Ariadne engine, the agent does the thinking and Parallax gives it the studio's tools
 over MCP. When the agent wants a picture, the member gets an approval card with the price and
@@ -82,7 +82,7 @@ pays with their own credits. The generation key never leaves Parallax.
 
 *The chat above ran in the test setup: a stand-in agent and a sample picture.*
 
-**Set it up: [`docs/ariadne-on-orgo.md`](docs/ariadne-on-orgo.md).** It is a step-by-step guide:
+**Set it up: [`docs/ariadne-agent.md`](docs/ariadne-agent.md).** It is a step-by-step guide:
 turn on the agent's API server, make two secrets, join the machines, add one entry to the
 agent's config, start Parallax. It also lists what to build next.
 
@@ -170,7 +170,8 @@ Everything is optional. Put them in `.env.local`.
 | `PARALLAX_ORIGIN` | The public address of the app when it runs behind a proxy or a public link, for example `https://parallax.example.com`. The server writes its links with it and accepts requests from pages at that address |
 | `COOKIE_SECURE` | `1` when serving over https |
 | `SUPER_MODE` | `live` lets Supercomputer use the three keys below |
-| `ANTHROPIC_API_KEY`, `ORGO_API_KEY`, `COMPOSIO_API_KEY` | The agent's model, its cloud computer, and its app connections |
+| `ANTHROPIC_API_KEY`, `COMPOSIO_API_KEY` | The agent's model, and its app connections |
+| `COMPUTER_API_BASE_URL`, `COMPUTER_API_KEY`, `COMPUTER_WORKSPACE_ID` | The computer the agent works on — a service you run yourself, default `http://127.0.0.1:8081/api`; the REST shape it must answer is [`docs/computer-service.md`](docs/computer-service.md) |
 | `SUPER_ENGINE` | `ariadne` runs the Supercomputer chat on an Ariadne agent instead of the built-in loop |
 | `ARIADNE_URL`, `ARIADNE_API_KEY_FILE`, `SUPER_ENGINE_TOKEN_FILE`, `SUPER_ENGINE_NAME` | Where the agent's serve is, its key, the token it uses to call Parallax's tools, and the name members see |
 | `ARIADNE_PER_CHAT`, `ARIADNE_HOME`, `ARIADNE_BIN` | `1` starts one `ariadne --serve` per chat instead of dialing one shared endpoint, because one serve holds one conversation. Each lane then gets `lanes/<chat-id>/` under `ARIADNE_HOME` — its own config, tape and log — built from that home's `config.yaml`; `ARIADNE_BIN` is the binary it runs from |
@@ -275,7 +276,8 @@ at phone size. To run a few: `python3 tests/run.py tests/core_e2e.py tests/ui/ho
 | `migrations/` | The database tables, applied in order on first start |
 | `seed/demo/` | The demo content |
 | `docs/api/` | The API reference, one page per feature |
-| `docs/ariadne-on-orgo.md` | Running Supercomputer on an Ariadne agent |
+| `docs/ariadne-agent.md` | Running Supercomputer on an Ariadne agent |
+| `docs/computer-service.md` | The computer service seam: the REST calls Parallax makes, and what an image of ours must answer |
 | `docs/using-parallax.md` | how the app is used: every route, every endpoint, worked examples |
 | `deploy/add-parallax-to-ariadne.py` | adds Parallax's MCP entry to an Ariadne `config.yaml` |
 | `docs/ui/README.md`, `CONTRIBUTING.md` | How to build a screen, and how to build a feature |

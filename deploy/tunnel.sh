@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # A private pipe between Parallax (this machine) and the machine an Ariadne agent runs on.
-# Use it when the two are different machines. See docs/ariadne-on-orgo.md.
+# Use it when the two are different machines. See docs/ariadne-agent.md.
 #
 #   deploy/tunnel.sh start     open it and keep it open
 #   deploy/tunnel.sh stop      close it
@@ -41,7 +41,7 @@ stop() {
 
 case "${1:-status}" in
   start)
-    if [ ! -s "$CONF" ]; then echo "no $CONF yet: see docs/ariadne-on-orgo.md"; exit 1; fi
+    if [ ! -s "$CONF" ]; then echo "no $CONF yet: see docs/ariadne-agent.md"; exit 1; fi
     running && stop > /dev/null
     # Reconnects by itself. The log gets one line per attempt and no addresses.
     setsid nohup bash -c '

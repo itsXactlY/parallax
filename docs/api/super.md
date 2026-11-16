@@ -593,7 +593,7 @@ it.
 Both sides must reach each other: Parallax calls the agent, and the agent calls Parallax
 back. When they are on private machines, one SSH tunnel with a local and a remote forward
 does both: `deploy/tunnel.sh`. The full walk-through is
-[`docs/ariadne-on-orgo.md`](../ariadne-on-orgo.md).
+[`docs/ariadne-agent.md`](../ariadne-agent.md).
 
 If a setting is missing, the server logs one line that names it and uses the built-in
 engine.
@@ -637,7 +637,8 @@ engine.
 | `ARIADNE_DISABLE_TOOLS` | | Tools to hand to every lane with `DD_DISABLE_TOOLS` |
 | `ANTHROPIC_API_KEY` | | Assistant model key (live only) |
 | `SUPER_LLM_MODEL` | `claude-opus-5-5` | The model used for `auto` |
-| `ORGO_API_KEY`, `ORGO_WORKSPACE_ID` | | Cloud computer key and workspace (live only) |
+| `COMPUTER_API_BASE_URL` | `http://127.0.0.1:8081/api` | Where the computer service lives (live only) |
+| `COMPUTER_API_KEY`, `COMPUTER_WORKSPACE_ID` | | Computer service key and workspace (live only) |
 | `COMPOSIO_API_KEY` | | Connected apps key (live only) |
 | `PARALLAX_ORIGIN` | the request's own address | Public origin for connect links. Scheduled runs have no request, so they fall back to `http://localhost:3000` |
 | `SUPER_MAX_STEPS`, `SUPER_TURN_MS`, `SUPER_APPROVAL_MS`, `SUPER_JOB_WAIT_MS`, `SUPER_COMPUTER_IDLE_MIN` | 12, 300000, 1800000, 600000, 20 | Limits |

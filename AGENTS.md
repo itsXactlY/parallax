@@ -14,7 +14,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 (`SUPER_MODE=live`), or an Ariadne agent (`SUPER_ENGINE=ariadne`). The Ariadne engine starts one
 `ariadne --serve` per chat under `ARIADNE_HOME/lanes/<chat-id>/` and serves the studio's tools to
 it over MCP at `/api/super/mcp`. Read `docs/api/super.md` (Engines) and
-`docs/ariadne-on-orgo.md` before changing `src/server/super/ariadne.ts`.
+`docs/ariadne-agent.md` before changing `src/server/super/ariadne.ts`.
 
 Two rules that are easy to break:
 

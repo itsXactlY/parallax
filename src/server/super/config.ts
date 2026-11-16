@@ -14,7 +14,7 @@ export type Service = "llm" | "computer" | "connectors";
 
 const KEYS: Record<Service, string> = {
   llm: "ANTHROPIC_API_KEY",
-  computer: "ORGO_API_KEY",
+  computer: "COMPUTER_API_KEY",
   connectors: "COMPOSIO_API_KEY",
 };
 

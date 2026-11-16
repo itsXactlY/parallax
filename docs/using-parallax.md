@@ -54,7 +54,7 @@ curl -b $C -o fox.png localhost:3000/api/assets/$(python3 -c "import json;print(
 | `SUPER_ENGINE=ariadne` | Ariadne answers. Unset or anything else: the built-in engine stays in charge. |
 | `SUPER_MODE=live` + `ANTHROPIC_API_KEY` | the built-in engine calls a real model. Without it: scripted mock. |
 | `TREG_TOKEN` | the media gateway (treg.to). Without it every model returns a sample file, and credits are simulated. `TREG_DAILY_BUDGET_USD` caps real spend. |
-| `ORGO_API_KEY`, `COMPOSIO_API_KEY` | the agent's cloud computer and its connected apps, both only under `SUPER_MODE=live`. |
+| `COMPUTER_API_KEY`, `COMPOSIO_API_KEY` | the agent's computer (a service you run — `docs/computer-service.md`) and its connected apps, both only under `SUPER_MODE=live`. |
 | `SUPER_ENGINE_TOKEN` (or `..._FILE`) | the bearer the engine sends to `/api/super/mcp`. At least 24 characters; **required** for Ariadne. It is a spending credential. |
 | `ARIADNE_API_KEY` (or `..._FILE`) | the bearer Parallax sends to the agent's serve — its `DD_SERVE_KEY` / `serve.api_key`. |
 | `ARIADNE_BIN` | path to the `ariadne` binary (`--serve` build). |
@@ -244,7 +244,8 @@ That is `SUPER_TURN_MS` (default 300000 ms, honoured up to 30 minutes). Set it h
 
 ## Where to reach for more
 
-- `docs/ariadne-on-orgo.md` — this wiring, the two traces, the failure modes.
+- `docs/ariadne-agent.md` — this wiring, the two traces, the failure modes.
+- `docs/computer-service.md` — the computer seam, and our own image as the deployment unit.
 - `docs/api/super.md` — every Super endpoint, status codes, error shapes, and the engine's tool
   server (`/api/super/mcp`) with its turn keys.
 - `docs/api/developer.md` — the REST API and the developer MCP at `/api/mcp`: keys, scopes,

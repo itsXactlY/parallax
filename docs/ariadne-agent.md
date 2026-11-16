@@ -1,11 +1,11 @@
-# Supercomputer on an Ariadne agent, on Orgo
+# Supercomputer on an Ariadne agent
 
 Supercomputer is Parallax's agent chat. Out of the box it answers with a scripted stand-in
 (`SUPER_MODE=mock`). This guide swaps in a real agent: an **Ariadne** agent serving
 `/v1/chat/completions` runs the conversation, and Parallax gives it the studio's tools.
 
 ```
-member ──▶ Parallax ──POST /v1/chat/completions (stream)──▶ Ariadne agent (on an Orgo computer)
+member ──▶ Parallax ──POST /v1/chat/completions (stream)──▶ Ariadne agent (on a computer you run)
                ▲                                            │
                └────── POST /api/super/mcp (tools) ◀────────┘
 ```
@@ -27,7 +27,9 @@ What you get:
 
 - Parallax, built and running (see the [README](../README.md)). Node 22.13 or newer.
 - An Ariadne agent that can serve: `ariadne --serve 127.0.0.1:<port> --home <dir>`.
-- An Orgo computer for the agent to live on (any Linux machine works the same way).
+- A computer for the agent to live on. Any Linux machine you can reach works; the
+  shape is the same whether it is a VPS, a box under your desk, or a machine from a
+  computer service.
 - Ten minutes.
 
 ## Read this first: which agent?
@@ -103,7 +105,7 @@ Parallax calls the agent, and the agent calls Parallax back. Pick the case that 
 
 ### A. Same computer (simplest)
 
-Run Parallax on the Orgo computer the agent lives on. Everything stays on `127.0.0.1`:
+Run Parallax on the same machine the agent lives on. Everything stays on `127.0.0.1`:
 
 | | Address |
 |---|---|
@@ -114,22 +116,24 @@ Run Parallax on the Orgo computer the agent lives on. Everything stays on `127.0
 echo "http://127.0.0.1:8642" > deploy/run/engine/url.txt
 ```
 
-To open the app to a browser, make an Orgo public URL for Parallax's port (3000) and write
+To open the app to a browser, put a public URL in front of Parallax's port (3000) — a
+reverse proxy, a tunnel, or the public URL your computer service gives you — and write
 that address to `deploy/run/origin.txt`, for example `https://your-link.example`. Leave
 port 8642 private.
 
-### B. Two computers (Parallax here, the agent on Orgo)
+### B. Two machines (Parallax here, the agent somewhere else)
 
 Neither side needs a port open to the internet. One SSH connection carries both directions.
 
-1. Turn on **Direct SSH** for the agent's Orgo computer (dashboard, or the
-   `enable computer SSH` API call) with a key made for this purpose. Orgo may ask for a
-   restart of the computer, which interrupts the agent, so pick a quiet moment.
+1. Give the agent's machine an SSH endpoint you control: your own host, a VPS, or the
+   `enable computer SSH` call of a computer service, with a key made for this purpose.
+   A service may need to restart the machine to turn SSH on, which interrupts the
+   agent, so pick a quiet moment.
 2. Write `deploy/run/engine/ssh.conf` on the Parallax machine:
    ```
    Host agent
-     HostName <host Orgo gives you>
-     Port <port Orgo gives you>
+    HostName <host you point at>
+    Port <port you point at>
      User root
      IdentityFile /absolute/path/to/deploy/run/engine/id_ed25519
      UserKnownHostsFile /absolute/path/to/deploy/run/engine/known_hosts
@@ -322,20 +326,24 @@ Offered: `generate_media`, `list_models`, `get_model`, `quote`, `search_library`
 member who sent the message, so it uses their credits and their library.
 
 Not offered: Parallax's connected apps (the agent has its own), and the `computer_*` tools
-unless Parallax's own cloud computer is live (`SUPER_MODE=live` with an Orgo key).
+unless Parallax's own computer service is live (`SUPER_MODE=live` with `COMPUTER_API_KEY`).
 
 The technical reference is the "Engines" section of [`docs/api/super.md`](api/super.md).
 
 ## Next steps, if you want to build on this
 
-- **Run it against a live agent on Orgo and report back.** The loop has been proven here
-  against a local serve; the remote pairing has not.
-- **A one-command setup.** A script that makes the secrets, enables Direct SSH through the
-  Orgo API, writes `ssh.conf` and runs the config script on the agent.
+- **Run it against a live agent on your own machine and report back.** The loop has been
+  proven here against a local serve; the remote pairing has not.
+- **A one-command setup.** A script that makes the secrets, opens the SSH endpoint,
+  writes `ssh.conf`, and runs the config script on the agent.
 - **A ready-made narrow agent.** An Ariadne home with `DD_DISABLE_TOOLS` and nothing personal,
   for public deployments.
-- **An Orgo template.** One computer image with Parallax and an Ariadne agent already joined.
+- **Our own encapsulated OS.** One image we build and control: Parallax and an Ariadne
+  agent already joined inside it, the computer service on `127.0.0.1:8081` serving the
+  REST shape in [`docs/computer-service.md`](computer-service.md), and the whole thing
+  deployed as one unit. That replaces the vendor template, and it is the path to an
+  instant deploy on any machine.
 - **Per-member agents.** Today every member talks to the same agent, or to a lane that dies
-  with the chat. One Orgo computer per member would give each their own workspace.
+  with the chat. One machine per member would give each their own workspace.
 - **Show the agent's own steps in full.** Today its own tools appear as a name only.
 - **Connectors through the agent.** Let approval cards cover the agent's own app actions.

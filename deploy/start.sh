@@ -11,7 +11,7 @@
 #   server.log     the log
 #   env            optional extra settings, one NAME=value per line
 #   origin.txt     optional: the public https address, if the app sits behind a link or proxy
-#   engine/        optional: run Supercomputer on an Ariadne agent (see docs/ariadne-on-orgo.md)
+#   engine/        optional: run Supercomputer on an Ariadne agent (see docs/ariadne-agent.md)
 #     ariadne.key      the bearer the Ariadne serve endpoint expects (empty when it runs on
 #                      loopback with no key; absent when the endpoint has no key)
 #     engine.token     the token the agent uses to call Parallax's tools
