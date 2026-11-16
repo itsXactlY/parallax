@@ -488,6 +488,44 @@ Errors, in the order they are checked:
 
 A request is all or nothing: on any error no job is queued and no credit is held.
 
+### Models that run on this machine
+
+A model whose endpoint begins `local.` runs here instead of on the gateway: nothing is uploaded,
+nothing is charged, and `provider_cost` stays null. The job row, the batch rules and the asset
+shapes are identical, so a screen needs no special case. The price is always exactly 0, so the
+hold is 0 and `balance` comes back unchanged.
+
+A local render borrows the GPU from the server that answers chat, so it can answer these on
+`GET /api/jobs/:id` while it waits:
+
+| `error.code` | When |
+|---|---|
+| `gpu_busy` | The GPU is generating a chat turn that did not finish in time. The job is requeued. |
+| `lease_failed` | No lease server answered at `MEDIA_GPU_LEASE_URL`. The job is requeued. |
+| `weights_missing` | A weight file this model needs is not on the machine. |
+| `renderer_missing` | `SD_CPP_BIN` does not point at a renderer. |
+| `provider_off` | `MEDIA_PROVIDER=treg`: local rendering is switched off on this deployment. |
+
+### `GET /api/local/status`
+
+Signed in. What this machine can render right now, so a screen can mark a model unusable before
+anyone presses Generate.
+
+```json
+{
+  "provider": "auto",
+  "renderer_present": true,
+  "free_vram_mib": 1057,
+  "models": [
+    { "id": "moss-image-base", "ready": true, "missing": [] },
+    { "id": "moss-image-sft", "ready": false, "missing": ["MOSS-Image-SFT-UD-Q4_K_XL.gguf"] }
+  ]
+}
+```
+
+`ready` is the renderer plus every weight the model needs, checked on disk. See
+[`docs/local-media.md`](../local-media.md) for the seam, the environment and the GPU lease.
+
 ### `GET /api/jobs/:id`
 
 Auth: signed in (guest ok). Response `200`: `{ "job": Job }`.

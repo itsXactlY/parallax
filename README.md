@@ -172,6 +172,7 @@ Everything is optional. Put them in `.env.local`.
 | `SUPER_MODE` | `live` lets Supercomputer use the three keys below |
 | `ANTHROPIC_API_KEY`, `COMPOSIO_API_KEY` | The agent's model, and its app connections |
 | `COMPUTER_API_BASE_URL`, `COMPUTER_API_KEY`, `COMPUTER_WORKSPACE_ID` | The computer the agent works on — a service you run yourself, default `http://127.0.0.1:8081/api`; the REST shape it must answer is [`docs/computer-service.md`](docs/computer-service.md) |
+| `MEDIA_PROVIDER`, `SD_CPP_BIN`, `SD_CPP_MODEL_DIR`, `MEDIA_GPU_LEASE_URL` | Media that runs on this machine instead of a paid gateway: `MEDIA_PROVIDER=treg` keeps every job on the gateway, `auto` (default) fires `local.*` models locally. What it runs, where the weights are, and how it borrows the GPU is [`docs/local-media.md`](docs/local-media.md) |
 | `SUPER_ENGINE` | `ariadne` runs the Supercomputer chat on an Ariadne agent instead of the built-in loop |
 | `ARIADNE_URL`, `ARIADNE_API_KEY_FILE`, `SUPER_ENGINE_TOKEN_FILE`, `SUPER_ENGINE_NAME` | Where the agent's serve is, its key, the token it uses to call Parallax's tools, and the name members see |
 | `ARIADNE_PER_CHAT`, `ARIADNE_HOME`, `ARIADNE_BIN` | `1` starts one `ariadne --serve` per chat instead of dialing one shared endpoint, because one serve holds one conversation. Each lane then gets `lanes/<chat-id>/` under `ARIADNE_HOME` — its own config, tape and log — built from that home's `config.yaml`; `ARIADNE_BIN` is the binary it runs from |
@@ -278,6 +279,7 @@ at phone size. To run a few: `python3 tests/run.py tests/core_e2e.py tests/ui/ho
 | `docs/api/` | The API reference, one page per feature |
 | `docs/ariadne-agent.md` | Running Supercomputer on an Ariadne agent |
 | `docs/computer-service.md` | The computer service seam: the REST calls Parallax makes, and what an image of ours must answer |
+| `docs/local-media.md` | Local media: models that render on this machine's GPU, the lease that borrows it, and how to switch providers |
 | `docs/using-parallax.md` | how the app is used: every route, every endpoint, worked examples |
 | `deploy/add-parallax-to-ariadne.py` | adds Parallax's MCP entry to an Ariadne `config.yaml` |
 | `docs/ui/README.md`, `CONTRIBUTING.md` | How to build a screen, and how to build a feature |

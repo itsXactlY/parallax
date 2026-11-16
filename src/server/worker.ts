@@ -7,6 +7,7 @@ import { grant, release, settle } from "./credits";
 import { all, get, parseJson, run, tx } from "./db";
 import { ApiError } from "./errors";
 import { ResultError, mediaFromReply, mediaFromTask } from "./extract";
+import { LocalRendererError, runLocal, type LocalRenderRequest } from "./local-media";
 import type { JobRow } from "./jobs";
 import { mockDelayMs, mockMedia, mockShouldFail } from "./mock";
 import { TregUnreachable, classify, redact, taskFailure, taskOutcome, tregCall, tregMode, tregTask, tregUploadMedia, type TregTask } from "./treg";
@@ -138,6 +139,9 @@ function sweep(minAgeMs: number) {
 /** Google's routes are never answered from a stored copy, so sending twice could charge twice. */
 const replayable = (endpoint: string) => !endpoint.startsWith("google-ai.");
 
+/** A local endpoint runs on this machine, so sending it twice is safe and costs nothing. */
+const isLocal = (endpoint: string) => endpoint.startsWith("local.");
+
 /* --------------------------------- submit --------------------------------- */
 
 async function start(job: JobRow) {
@@ -146,6 +150,11 @@ async function start(job: JobRow) {
   if (!claimed) return;
   const attempts = job.attempts + 1;
   const output = outputOf(job);
+
+  // Models that run on this machine never leave it: no gateway, no upload, no price. This comes
+  // before the mock short-circuit on purpose -- mock mode fakes *provider* calls, and a local
+  // render is not a provider call. Faking it would write a generated stand-in instead of a picture.
+  if (isLocal(job.endpoint)) return startLocal(job, attempts);
 
   if (tregMode() === "mock") {
     run("UPDATE jobs SET treg_call_id = 'mock', next_poll_at = ? WHERE id = ?", now + mockDelayMs(output), job.id);
@@ -201,6 +210,32 @@ async function start(job: JobRow) {
   if (reply.costMicro != null) run("UPDATE jobs SET provider_cost_micro = ? WHERE id = ?", reply.costMicro, job.id);
   const files = await mediaFromReply(reply, output, job.expect_count);
   await finish(job, files, reply.callId, reply.costMicro);
+}
+
+/**
+ * One local render. The request body carries the weight file names and the render box;
+ * `runLocal` takes the GPU lease, renders, and hands the GPU back.
+ */
+async function startLocal(job: JobRow, attempts: number) {
+  // `jobs.request` stores the built call as `{ body, query, headers }`; the render request is the body.
+  const stored = parseJson<{ body?: Record<string, unknown> }>(job.request, {});
+  const seed = hashSeed(job.id);
+  try {
+    const bytes = await runLocal({ ...(stored.body ?? {}), seed } as LocalRenderRequest, job.id);
+    await finish(job, [bytes], `local:${job.id}`, 0);
+  } catch (err) {
+    if (!(err instanceof LocalRendererError)) throw err;
+    console.warn(`[worker] ${job.id} ${job.endpoint}: ${err.message}`);
+    if (err.code === "gpu_busy" || err.code === "lease_failed") return retryOrFail(job, attempts, "The GPU is busy with another job. Try again shortly.");
+    return fail(job.id, err.code, err.message);
+  }
+}
+
+/** Jobs that share a press of Generate differ only by id, so the id decides the seed. */
+function hashSeed(id: string): number {
+  let h = 2166136261;
+  for (const c of id) h = (h ^ c.charCodeAt(0)) * 16777619;
+  return h >>> 0;
 }
 
 function retryOrFail(job: JobRow, attempts: number, message = "The model is busy or unavailable. Try again shortly.") {

@@ -5,10 +5,12 @@
  */
 import { musicModels, speechModels } from "./audio";
 import { imageModels } from "./image";
+import { localModels } from "./local";
 import { videoModels } from "./video";
 import type { ModelDef } from "./types";
 
-export const models: ModelDef[] = [...imageModels, ...videoModels, ...speechModels, ...musicModels];
+/** Local models sit last: the paid models lead the picker, the machine's own models follow. */
+export const models: ModelDef[] = [...imageModels, ...videoModels, ...speechModels, ...musicModels, ...localModels];
 
 const byId = new Map(models.map((m) => [m.id, m]));
 
@@ -29,4 +31,4 @@ export function defaultModel(surface: string): ModelDef | undefined {
 
 export * from "./types";
 export * from "./logic";
-export { quoteUsd, catalogEndpoint } from "./quote";
+export { quoteUsd, catalogEndpoint, knownEndpoint } from "./quote";

@@ -6,7 +6,7 @@
  * so this runs before every build.
  */
 import { formatCredits, usdToMillicredits } from "../src/config/economy";
-import { catalogEndpoint, matches, models, quoteJob, resolveValues, type Control, type Filled, type ModelDef } from "../src/registry";
+import { catalogEndpoint, knownEndpoint, matches, models, quoteJob, resolveValues, type Control, type Filled, type Kind, type ModelDef } from "../src/registry";
 
 function candidates(c: Control): unknown[] {
   switch (c.type) {
@@ -62,9 +62,12 @@ for (const model of models) {
           if (sent === undefined) problems.push(`missing required header "${name}" on ${q.request.endpoint}: ${where}`);
           else if (allowed.length && !allowed.includes(sent)) problems.push(`header "${name}: ${sent}" not accepted by ${q.request.endpoint}: ${where}`);
         }
-        if (!catalogEndpoint(q.request.endpoint)) problems.push(`unknown endpoint ${q.request.endpoint}: ${where}`);
+        if (!knownEndpoint(q.request.endpoint)) problems.push(`unknown endpoint ${q.request.endpoint}: ${where}`);
         else if (!q.exact) problems.push(`no price row on ${q.request.endpoint}: ${where}`);
-        else if (!(q.usdPerJob > 0)) problems.push(`zero price on ${q.request.endpoint}: ${where}`);
+        else if (q.request.endpoint.startsWith("local.")) {
+          // A model on this machine has no provider cost. Charging it anything would be a lie.
+          if (q.usdPerJob !== 0) problems.push(`a local model is priced ${q.usdPerJob} USD: ${where}`);
+        } else if (!(q.usdPerJob > 0)) problems.push(`zero price on ${q.request.endpoint}: ${where}`);
         if (JSON.stringify(q.request).includes("undefined")) problems.push(`undefined in request: ${where}`);
         low = Math.min(low, q.millicredits);
         high = Math.max(high, q.millicredits);

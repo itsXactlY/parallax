@@ -133,7 +133,9 @@ export function quoteJob(model: ModelDef, draft: JobDraft): JobQuote {
     count: perJobCount,
   });
   const q = quoteUsd(request.endpoint, request.body);
-  const perJob = usdToMillicredits(q.usd);
+  // The price floor is a floor on *provider* cost. A run that costs nothing — a model on this
+  // machine — is charged nothing, not one step.
+  const perJob = q.usd === 0 && q.exact ? 0 : usdToMillicredits(q.usd);
   return { millicredits: perJob * jobs, perJob, usdPerJob: q.usd, jobs, perJobCount, exact: q.exact, metered: q.metered, request };
 }
 

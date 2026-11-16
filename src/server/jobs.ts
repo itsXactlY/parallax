@@ -1,7 +1,7 @@
 import "server-only";
 
 import { MAX_BATCH, formatCredits, planOf } from "@/config/economy";
-import { assetRef, catalogEndpoint, getModel, quoteJob, resolveValues, visibleSlots, type Filled, type Kind, type MediaRef, type MediaType, type ModelDef, type Values } from "@/registry";
+import { assetRef, getModel, knownEndpoint, quoteJob, resolveValues, visibleSlots, type Filled, type Kind, type MediaRef, type MediaType, type ModelDef, type Values } from "@/registry";
 import { assetsOfJobs, ownedAsset, removeAsset, toAsset, type Asset, type AssetRow } from "./assets";
 import type { User } from "./auth";
 import { balance, hold, release } from "./credits";
@@ -207,7 +207,7 @@ export function submitJobs(user: User, input: SubmitInput): Job[] {
 
   const asked = Math.floor(Number(input.count)) || 1;
   const quote = quoteJob(model, { prompt, values, media, filled, count: model.batch.native ? asked : Math.min(asked, MAX_BATCH) });
-  if (!catalogEndpoint(quote.request.endpoint)) throw new ApiError(409, "model_unavailable", `${model.name} is not available right now.`);
+  if (!knownEndpoint(quote.request.endpoint)) throw new ApiError(409, "model_unavailable", `${model.name} is not available right now.`);
 
   const have = balance(user.id);
   if (have < quote.millicredits) {
@@ -259,7 +259,8 @@ export function submitJobs(user: User, input: SubmitInput): Job[] {
         metaText.length <= 4000 ? metaText : "{}",
         now + i, // keeps a batch in a stable order
       );
-      hold(user.id, id, quote.perJob, model.name);
+      // A job that costs nothing holds nothing: a zero row would be noise in the wallet.
+      if (quote.perJob > 0) hold(user.id, id, quote.perJob, model.name);
     }
   });
 

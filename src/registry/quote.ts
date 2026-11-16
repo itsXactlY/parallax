@@ -60,6 +60,11 @@ export function catalogEndpoint(id: string): CatalogEndpoint | undefined {
   return endpoints[id];
 }
 
+/** True when the endpoint can be run: Treg's catalog, or this machine's own renderer. */
+export function knownEndpoint(id: string): boolean {
+  return id.startsWith("local.") || endpoints[id] != null;
+}
+
 /** Reads `a.b.c` from a value. A leading `body.` is dropped: rule paths are written from the request root. */
 export function readPath(root: unknown, path: string): unknown {
   let node: unknown = root;
@@ -92,6 +97,8 @@ function textLength(body: unknown, unit: string): number {
 }
 
 export function quoteUsd(endpointId: string, body: unknown): Quote {
+  // A `local.` endpoint is this machine's own renderer: no provider, nothing to charge.
+  if (endpointId.startsWith("local.")) return { usd: 0, exact: true, metered: false };
   const cost = endpoints[endpointId]?.cost;
   if (!cost) return { usd: 0, exact: false, metered: false };
   const metered = cost.settle === "usage" && !endpoints[endpointId]?.async;
