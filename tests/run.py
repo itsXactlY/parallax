@@ -57,7 +57,11 @@ def run_one(test: str) -> int:
     data = tempfile.mkdtemp(prefix="parallax-test-")
     # Tests never see a real key: outside services run as mocks, and key variables are removed.
     env = {k: v for k, v in os.environ.items() if not k.endswith(("_API_KEY", "_TOKEN"))}
-    env.update(TREG_MODE="mock", SUPER_MODE="mock", PARALLAX_DATA_DIR=data, PARALLAX_DEMO_BILLING="1")
+    # MEDIA_PROVIDER=treg keeps the suite off this machine's GPU: a `local.` model submitted by a
+    # walk-through would otherwise take the render lease and unload the model serving the operator.
+    # The local provider has its own suite (`npm run test:local-media`) with a stub renderer.
+    env.update(TREG_MODE="mock", SUPER_MODE="mock", PARALLAX_DATA_DIR=data, PARALLAX_DEMO_BILLING="1",
+               MEDIA_PROVIDER="treg")
     if hosts_itself(test):
         os.makedirs(os.path.join(data, "logs"))
         own = [sys.executable, test, APP, os.path.join(data, "data"), PORT]

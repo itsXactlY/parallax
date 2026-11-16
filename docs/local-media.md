@@ -48,6 +48,11 @@ POST {MEDIA_GPU_LEASE_URL}/load              → {"status":"loaded"}    (hand it
 render that cannot get the GPU fails with `gpu_busy` and the job is requeued. Renders are
 serialized in one process — two renderers on one GPU oversubscribe it and both fail.
 
+**One Parallax process per GPU** is the invariant behind that serialization: the queue that keeps
+two renders apart (`state.inflight`, one promise chain) lives in the process, and a second process
+would see free VRAM after the first unloaded the serving model and skip the lease entirely. Run
+local media on a single instance — the rest of the app scales horizontally, this does not.
+
 The lease is an HTTP call to whatever serves `/unload` and `/load`. Strata's server does; the URL
 is `MEDIA_GPU_LEASE_URL`, default `http://127.0.0.1:8080`. It is sent without an `Origin`, which is
 what that server accepts for control routes — a browser page cannot reach them, only the server can.
@@ -156,7 +161,17 @@ never show a price the machine will not charge.
 `npm run fire:local` fires a real render through the same code path and writes the PNG out — it
 takes the GPU lease, so run it when the lane is quiet.
 
+`tests/run.py` runs the API suite with `MEDIA_PROVIDER=treg`, so no walk-through can take the lease:
+a `local.` model submitted by a browser test would unload the model serving the operator and hold
+the card for minutes. The local path is covered by `npm run test:local-media` instead, which needs
+no GPU at all.
+
 ## What is not local yet
 
 Video (Wan2.2 T2V A14B high+low is ~19 GiB of weights, more than this GPU), image editing
 (sd-cpp Kontext/FLUX.3 edit recipes), speech and music. Those stay on the paid gateway.
+
+The picker also still lists the `local.*` rows on a deployment that refuses them
+(`MEDIA_PROVIDER=treg`): the registry is bundled into the client, so hiding them needs
+`GET /api/local/status` in the picker, which the UI does not do yet. Pressing one answers
+`provider_off` — the job fails before any credit is held, and says why.
